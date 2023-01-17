@@ -1,103 +1,68 @@
-import re
 import time
-from selenium.common.exceptions import NoSuchElementException
+
+import requests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.service import Service as EdgeService
-
-base_link = 'https://www.sciencedirect.com/search?qs=sers&show=100'
-elsevier_link_over_hundred = 'https://www.sciencedirect.com/search?qs=sers&show=100&offset=100'
+from fake_useragent import UserAgent
+import http.cookiejar, urllib.request, sys
+from urllib.parse import urlencode, quote_plus, urlparse
 
 
-class Article:
-    def __init__(self, url):
-        self.url = url
-        self.paper_title = ''
-        self.doi = ''
-        self.corr_authors = []
-        self.driver = None
-
-    def get_driver(self, sleep=1):
-        # # needed only once for installation
-        # from webdriver_manager.microsoft import EdgeChromiumDriverManager
-        # driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()))
-
-        self.driver = webdriver.Edge(service=EdgeService())
-
-        self.driver.get(self.url)  # two auth == corr
-        time.sleep(sleep)
-
-    def click_author_buttons(self, auth, sleep=1):
-        actions = ActionChains(self.driver)
-        actions.click(auth)
-        actions.perform()
-        time.sleep(sleep)
-
-    def get_article_meta(self, soup):
-        try:
-            for title in soup.find('title'):
-                self.paper_title = title
-        except Exception as e:
-            print(f'Getting article title failed! Reason?: {e}')
-        try:
-            for doi in soup.find('a', {'class': "doi"}):
-                self.doi = doi
-        except Exception as e:
-            print(f'Getting article DOI failed! Reason?: {e}')
-
-    def parse_article(self):
-        try:
-            self.get_driver(sleep=1)
-            button = self.driver.find_elements(By.CLASS_NAME, 'workspace-trigger')
-            for corr_author in button:  # Goes thru all the authors )
-                self.click_author_buttons(corr_author, sleep=1)
-                soup = BeautifulSoup(self.driver.page_source, 'html.parser')
-                for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
-                    self.get_article_meta(soup)
-                    author = Author()
-                    author.get_author_meta(data)
-                    self.corr_authors.append(author)
-
-        except NoSuchElementException:
-            pass
+# from article import Article
 
 
-class Author:
-    def __init__(self):
-        self.first_name = ''
-        self.surname = ''
-        self.email = ''
-        self.affiliation = ''
+class ScienceDirectParser:
+    def __init__(self, keyword='SERS', n_per_page=25, pages=2):
+        self.keyword = keyword
+        self.n_per_page = n_per_page
+        self.page_nums = pages
+        self.parser_url = ''
+        self.articles_urls = []
+        self.soup = None
 
-    def get_author_meta(self, data):
-        try:
-            for mail in data.find_all_next('div', {'class': 'e-address'}):
-                print('dupa')
-                email = mail.find('a').get('href')
-                print('lupa')
-                if re.match(r'.+@.+\..+', email):
-                    print('kupa')
-                    self.email = re.search(r'(?<=mailto:)(.+)@(.+)\.(.+)', email).group()
-        except Exception as e:
-            print(f'Getting e-mail failed! Reason?: {e}')
-        try:
-            for name in data.find('span', {'class': "given-name"}):
-                self.first_name = name
-        except Exception as e:
-            print(f'Getting given name failed! Reason?: {e}')
-        try:
-            for surname in data.find('span', {'class': "surname"}):
-                self.surname = surname
-        except Exception as e:
-            print(f'Getting surname failed! Reason?: {e}')
+    def create_url(self, i):
+        self.parser_url = f'https://www.sciencedirect.com/search?qs={self.keyword}&show={i * self.n_per_page}'
+
+    def get_server_response(self):
+        #TODO do wyjebania
+        cj = http.cookiejar.CookieJar()
+        opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+        payload = {'username': 'administrator', 'password': 'xyz'}
+        result = urlencode(payload, quote_via=quote_plus)
+        login_data = urlparse({'login': 'admin', 'pass': '123'})
+        resp = opener.open('https://www.sciencedirect.com/search?qs=SERS&show=25', login_data)
+        ua = str(UserAgent().opera)
+        resp.addheaders = ua
+        html = resp.read()
+        print(html)
+
+        # ua = str(UserAgent().opera)
+        # headers = {'User-Agent': ua}
+        # response = requests.get('https://www.sciencedirect.com/search?qs=SERS&show=25',
+        #                         headers=headers)
+        # if response.status_code == 200:
+        #     self.soup = BeautifulSoup(response.content, 'html.parser')
+        #     print(self.soup)
+        # else:
+        #     raise ConnectionError(response.status_code, response.raise_for_status())
+
+    def get_articles_urls(self):
+        for data in self.soup.find_all('a', {'class': 'anchor-default'}):
+            self.articles_urls.append(data.get('href'))
+
+    def scrap(self):
+        for page_num in range(1, self.page_nums + 1):
+            self.create_url(page_num)
+            try:
+                time.sleep(1)
+                self.get_server_response()
+                time.sleep(1)
+            except ConnectionError as e:
+                print(e)
+                continue
+            self.get_articles_urls()
+            print(self.articles_urls)
 
 
 if __name__ == '__main__':
-    # given_url = 'https://www.sciencedirect.com/science/article/pii/S1571065308000656'  # first auth == corr
-    # given_url = 'https://www.sciencedirect.com/science/article/pii/S0021979722022470'  # last auth == corr
-    given_url = 'https://www.sciencedirect.com/science/article/pii/S0925400522018937'  # two auth == corr
-
-    science = Article(given_url)
-    science.parse_article()
+    science = ScienceDirectParser()
+    science.scrap()
