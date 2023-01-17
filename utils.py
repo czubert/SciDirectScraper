@@ -31,7 +31,7 @@ try:
         #TODO delete it at the end. Part responsible for checking information
         # with open(f'{time.time()}_author.txt', 'wb') as f:
         #     f.write(soup.prettify().encode('UTF-8'))
-        # print(soup.prettify())
+
 
         try:
             # for data in soup.find_all('div', {'class': 'e-address'}):
