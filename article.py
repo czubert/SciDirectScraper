@@ -19,13 +19,14 @@ class Article:
         self.driver = None
 
     def get_driver(self, sleep=1):
-        # # needed only once for installation
-        # from webdriver_manager.microsoft import EdgeChromiumDriverManager
-        # driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()))
 
-        self.driver = webdriver.Edge(service=EdgeService())
+        try:
+            self.driver = webdriver.Edge(service=EdgeService())
+        except Exception:  # todo sprawdzić jakie
+            from webdriver_manager.microsoft import EdgeChromiumDriverManager
+            self.driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()))
 
-        self.driver.get(self.url)  # two auth == corr
+        self.driver.get(self.url)
         time.sleep(sleep)
 
     def click_author_buttons(self, auth, sleep=1):
