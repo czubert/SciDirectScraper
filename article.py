@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.chrome.service import Service as ChromeService
 
 from author import Author
 
@@ -19,12 +19,7 @@ class Article:
         self.driver = None
 
     def get_driver(self, sleep=1):
-
-        try:
-            self.driver = webdriver.Edge(service=EdgeService())
-        except Exception:  # todo sprawdzić jakie
-            from webdriver_manager.microsoft import EdgeChromiumDriverManager
-            self.driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()))
+        self.driver = webdriver.Chrome(service=ChromeService())
 
         self.driver.get(self.url)
         time.sleep(sleep)
