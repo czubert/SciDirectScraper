@@ -23,8 +23,9 @@ class ScienceDirectParser:
         self.articles_urls = []
         self.soup = None
         self.offset = None
+        self.parsed_articles = []
 
-    def create_url(self, page_num):
+    def create_parser_url(self, page_num):
         years = [str(x) for x in self.years]
         url_years = "%2c".join(years)
         pub_per_page = self.pub_per_page * self.pub_per_page_multi25
@@ -51,19 +52,26 @@ class ScienceDirectParser:
                 print(len(self.articles_urls))
                 time.sleep(1)
             else:
-                print('No more pages to scroll')
+                print('No more pages to parse')
                 break
 
     def scrap(self):
         for page_num in range(1, self.n_pages + 1):
-            self.create_url(page_num)
+            self.create_parser_url(page_num)
             self.get_articles_urls()
-            # for pub_url in self.articles_urls[:3]:
-            #     article = Article(pub_url)
-            #     article.parse_article()
+
+            for i, pub_url in enumerate(self.articles_urls):
+                parsed_article = Article(pub_url)
+                parsed_article.parse_article()
+                self.parsed_articles.append(parsed_article)
+                print(f'{i+1}/{len(self.articles_urls)} parsed')
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=1, n_pages=1,
-                                  years=[x for x in range(1940, 2023)])
+    # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
+    #                               years=[x for x in range(1940, 2023)])
+    # science.scrap()
+
+    science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
+                                  years=[2022])
     science.scrap()

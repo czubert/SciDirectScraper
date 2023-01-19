@@ -1,5 +1,6 @@
 import time
 
+import pandas as pd
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -15,8 +16,9 @@ class Article:
         self.url = url
         self.paper_title = ''
         self.doi = ''
-        self.corr_authors = []
         self.driver = None
+        self.corr_authors = []
+        self.article_data_df = None
 
     def get_driver(self, sleep=1):
         self.driver = webdriver.Chrome(service=ChromeService())
@@ -48,6 +50,21 @@ class Article:
         if author.email:
             self.corr_authors.append(author)
 
+    def add_records_to_df(self):
+        columns = ['name', 'surname', 'email', 'affiliation', 'publ_title', 'doi']
+        self.article_data_df = pd.DataFrame(columns=columns)
+
+        for author in self.corr_authors:
+            df = pd.DataFrame({'name': author.first_name,
+                               'surname': author.surname,
+                               'email': author.email,
+                               'affiliation': author.affiliation,
+                               'publ_title': self.paper_title,
+                               'doi': self.doi
+                               }, index=[f'{author.surname}_{author.first_name}'])
+            print(author.surname)
+            self.article_data_df = self.article_data_df.append(df)
+
     def parse_article(self):
         try:
             self.get_driver(sleep=1)
@@ -59,11 +76,13 @@ class Article:
                     self.get_article_meta(soup)
                     self.get_author_meta(data)
 
+            self.add_records_to_df()
         except NoSuchElementException:
             pass
 
 
 if __name__ == '__main__':
-    url = 'https://www.sciencedirect.com/science/article/pii/S0021979722022470'
+    # url = 'https://www.sciencedirect.com/science/article/pii/S0021979722022470'
+    url = 'https://www.sciencedirect.com/science/article/pii/S000326701931462X'
     art = Article(url)
     art.parse_article()
