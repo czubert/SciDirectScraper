@@ -59,15 +59,11 @@ class ScienceDirectParser:
                 print('No more pages to parse')
                 break
 
-    def create_authors_collection(self):
-        columns = constants.COLUMNS
-        self.authors_collection = pd.DataFrame(columns=columns)
-
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
 
     def scrap(self):
-        self.create_authors_collection()
+        self.authors_collection = utils.create_named_dataframe()
         for page_num in range(1, self.n_pages + 1):
             self.create_parser_url(page_num)
             self.get_articles_urls()

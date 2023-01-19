@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 
 import constants
+import utils
 from author import Author
 
 
@@ -77,10 +78,9 @@ class Article:
             self.corr_authors.append(author)
 
     def add_records_to_df(self):
-        columns = constants.COLUMNS
-        self.article_data_df = pd.DataFrame(columns=columns)
+        self.article_data_df = utils.create_named_dataframe()
+
         for author in self.corr_authors:
-            print(self.year)
             df = pd.DataFrame({'name': author.first_name,
                                'surname': author.surname,
                                'email': author.email,
@@ -89,6 +89,7 @@ class Article:
                                'doi': self.doi,
                                'year': self.year
                                }, index=[f'{author.surname}_{author.first_name}'])
+            df.index.name = 'id'
             self.article_data_df = self.article_data_df.append(df)
 
     def parse_article(self):
