@@ -8,7 +8,7 @@ class Author:
         self.email = ''
         self.affiliation = ''
 
-    def get_author_meta(self, data):
+    def get_author_meta(self, data):  # todo podzielić na funkcje
         try:
             for mail in data.find_all_next('div', {'class': 'e-address'}):
                 email = mail.find('a').get('href')

@@ -1,17 +1,20 @@
 import time
 
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+import constants
 import utils
 from article import Article
 
 
 class ScienceDirectParser:
     def __init__(self, keyword='SERS', pub_per_page_multi25=1, n_pages=2, years=[2022]):
+        self.authors_collection = None
         self.keyword = keyword
         self.pub_per_page = 25
         self.pub_per_page_multi25 = pub_per_page_multi25
@@ -56,16 +59,26 @@ class ScienceDirectParser:
                 print('No more pages to parse')
                 break
 
+    def create_authors_collection(self):
+        columns = constants.COLUMNS
+        self.authors_collection = pd.DataFrame(columns=columns)
+
+    def add_records_to_collection(self, record):
+        self.authors_collection = pd.concat((self.authors_collection, record))
+
     def scrap(self):
+        self.create_authors_collection()
         for page_num in range(1, self.n_pages + 1):
             self.create_parser_url(page_num)
             self.get_articles_urls()
 
-            for i, pub_url in enumerate(self.articles_urls):
+            for i, pub_url in enumerate(self.articles_urls[:5]):
                 parsed_article = Article(pub_url)
                 parsed_article.parse_article()
                 self.parsed_articles.append(parsed_article)
-                print(f'{i+1}/{len(self.articles_urls)} parsed')
+                self.add_records_to_collection(parsed_article.article_data_df)
+                print(f'{i + 1}/{len(self.articles_urls)} parsed')
+        utils.write_data_coll_to_file(self.authors_collection)
 
 
 if __name__ == '__main__':
@@ -74,5 +87,5 @@ if __name__ == '__main__':
     # science.scrap()
 
     science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
-                                  years=[2022])
+                                  years=[2021])
     science.scrap()

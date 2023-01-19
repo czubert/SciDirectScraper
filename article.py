@@ -1,3 +1,4 @@
+import re
 import time
 
 import pandas as pd
@@ -8,11 +9,13 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+import constants
 from author import Author
 
 
 class Article:
     def __init__(self, url):
+        self.year = None
         self.url = url
         self.paper_title = ''
         self.doi = ''
@@ -33,16 +36,38 @@ class Article:
         time.sleep(sleep)
 
     def get_article_meta(self, soup):
-        try:
-            for title in soup.find('title'):
-                self.paper_title = title
-        except Exception as e:
-            print(f'Getting article title failed! Reason?: {e}')
+        self.get_doi(soup)
+        self.get_title(soup)
+        self.get_year(soup)
+
+    def get_doi(self, soup):
         try:
             for doi in soup.find('a', {'class': "doi"}):
                 self.doi = doi
         except Exception as e:
             print(f'Getting article DOI failed! Reason?: {e}')
+
+    def get_title(self, soup):
+        try:
+            for title in soup.find('title'):
+                self.paper_title = title
+        except Exception as e:
+            print(f'Getting article title failed! Reason?: {e}')
+
+    def get_year(self, soup):
+        try:
+            for year in soup.find_all('div', {'class': 'text-xs'}):
+                # print(year.text)
+                pattern = r'\d{4}(?=<\!-- -->)'
+                year = re.findall(pattern, year.text)
+                # print(year)
+                if len(year) > 0:
+                    self.year = year
+                    print(year)
+                    break
+
+        except Exception as e:
+            print(f'Getting article title failed! Reason?: {e}')
 
     def get_author_meta(self, data):
         author = Author()
@@ -51,7 +76,7 @@ class Article:
             self.corr_authors.append(author)
 
     def add_records_to_df(self):
-        columns = ['name', 'surname', 'email', 'affiliation', 'publ_title', 'doi']
+        columns = constants.COLUMNS
         self.article_data_df = pd.DataFrame(columns=columns)
 
         for author in self.corr_authors:
