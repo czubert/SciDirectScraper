@@ -68,20 +68,20 @@ class ScienceDirectParser:
             self.create_parser_url(page_num)
             self.get_articles_urls()
 
-            for i, pub_url in enumerate(self.articles_urls[:5]):
+            for i, pub_url in enumerate(self.articles_urls):
                 parsed_article = Article(pub_url)
                 parsed_article.parse_article()
                 self.parsed_articles.append(parsed_article)
                 self.add_records_to_collection(parsed_article.article_data_df)
                 print(f'{i + 1}/{len(self.articles_urls)} parsed')
-        utils.write_data_coll_to_file(self.authors_collection)
+        file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
+        utils.write_data_coll_to_file(self.authors_collection, file_name)
 
 
 if __name__ == '__main__':
-    # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
-    #                               years=[x for x in range(1940, 2023)])
-    # science.scrap()
+    science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=4, n_pages=1,
+                                  years=[x for x in range(2016, 2020)])
 
-    science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
-                                  years=[2021])
+    # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
+    #                               years=[2021])
     science.scrap()

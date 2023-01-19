@@ -51,6 +51,7 @@ class Article:
     def get_title(self, soup):
         try:
             for title in soup.find('title'):
+                title = re.search('.+(?= - ScienceDirect)', title).group()
                 self.paper_title = title
         except Exception as e:
             print(f'Getting article title failed! Reason?: {e}')
@@ -65,6 +66,10 @@ class Article:
                 elif re.search(r'\d{4}(?=,\s\d{6}$)',  year):
                     pattern = r'\d{4}(?=,\s\d{6}$)'
                     year = re.findall(pattern, year)
+                elif re.search(r'\d{4}(?=,\sPages)',  year):
+                    pattern = r'\d{4}(?=,\sPages)'
+                    year = re.findall(pattern, year)
+
                 if len(year) > 0:
                     self.year = year[0]
                     break
@@ -102,6 +107,7 @@ class Article:
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
                     self.get_article_meta(soup)
                     self.get_author_meta(data)
+            self.driver.close()
 
             self.add_records_to_df()
         except NoSuchElementException:
