@@ -57,15 +57,16 @@ class Article:
     def get_year(self, soup):
         try:
             for year in soup.find_all('div', {'class': 'text-xs'}):
-                # print(year.text)
-                pattern = r'\d{4}(?=<\!-- -->)'
-                year = re.findall(pattern, year.text)
-                # print(year)
+                year = year.text
+                if re.search(r'<!-- -->', year):
+                    pattern = r'\d{4}(?=<!-- -->'
+                    year = re.findall(pattern, year)
+                elif re.search(r'\d{4}(?=,\s\d{6}$)',  year):
+                    pattern = r'\d{4}(?=,\s\d{6}$)'
+                    year = re.findall(pattern, year)
                 if len(year) > 0:
-                    self.year = year
-                    print(year)
+                    self.year = year[0]
                     break
-
         except Exception as e:
             print(f'Getting article title failed! Reason?: {e}')
 
@@ -78,14 +79,15 @@ class Article:
     def add_records_to_df(self):
         columns = constants.COLUMNS
         self.article_data_df = pd.DataFrame(columns=columns)
-
         for author in self.corr_authors:
+            print(self.year)
             df = pd.DataFrame({'name': author.first_name,
                                'surname': author.surname,
                                'email': author.email,
                                'affiliation': author.affiliation,
                                'publ_title': self.paper_title,
-                               'doi': self.doi
+                               'doi': self.doi,
+                               'year': self.year
                                }, index=[f'{author.surname}_{author.first_name}'])
             self.article_data_df = self.article_data_df.append(df)
 
