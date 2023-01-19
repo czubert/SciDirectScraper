@@ -62,7 +62,6 @@ class Article:
                                'publ_title': self.paper_title,
                                'doi': self.doi
                                }, index=[f'{author.surname}_{author.first_name}'])
-            print(author.surname)
             self.article_data_df = self.article_data_df.append(df)
 
     def parse_article(self):

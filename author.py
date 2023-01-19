@@ -1,5 +1,5 @@
 import re
-
+import bs4
 
 class Author:
     def __init__(self):
@@ -26,3 +26,12 @@ class Author:
                 self.surname = surname
         except Exception as e:
             print(f'Getting surname failed! Reason?: {e}')
+        try:
+            # for affiliation in data.find('div', {'class': "affiliation"}):
+            for affiliation in data.find('div', {'class': "affiliation"}):
+                if type(affiliation) == bs4.element.NavigableString:
+                    self.affiliation = affiliation
+                else:
+                    continue
+        except Exception as e:
+            print(f'Getting affiliation failed! Reason?: {e}')

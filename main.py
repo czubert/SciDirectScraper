@@ -24,6 +24,7 @@ class ScienceDirectParser:
         self.soup = None
         self.offset = None
         self.parsed_articles = []
+        self.parsed_articles_df = None
 
     def create_parser_url(self, page_num):
         years = [str(x) for x in self.years]
