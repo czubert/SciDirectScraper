@@ -93,7 +93,7 @@ class Article:
                                'publ_title': self.paper_title,
                                'doi': self.doi,
                                'year': self.year
-                               }, index=[f'{author.surname}_{author.first_name}'])
+                               }, index=[f'{author.surname.replace(" ", "_")}-{author.first_name.replace(" ", "_")}'])
             df.index.name = 'id'
             self.article_data_df = self.article_data_df.append(df)
 

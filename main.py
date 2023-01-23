@@ -1,3 +1,4 @@
+import random
 import time
 
 import pandas as pd
@@ -7,13 +8,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-import constants
 import utils
 from article import Article
 
 
 class ScienceDirectParser:
     def __init__(self, keyword='SERS', pub_per_page_multi25=1, n_pages=2, years=[2022]):
+        self.collection_xlsx_buffer = None
+        self.csv_file = None
+        self.file_name = None
         self.authors_collection = None
         self.keyword = keyword
         self.pub_per_page = 25
@@ -40,13 +43,13 @@ class ScienceDirectParser:
         driver = webdriver.Chrome(service=ChromeService())
 
         driver.get(self.parser_url)
-        wait = WebDriverWait(driver, 3)
+        wait = WebDriverWait(driver, 1)
 
         while True:
             # Parse web for urls
             self.articles_urls += [item.get_attribute("href") for item in wait.until(
                 EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
-            time.sleep(1)
+            time.sleep(random.random())
 
             # Scrolls to the bottom to avoid 'feedback' pop-up
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -63,10 +66,14 @@ class ScienceDirectParser:
         self.authors_collection = pd.concat((self.authors_collection, record))
 
     def scrap(self):
+        # TODO coś tu śmierdzi, nie ma ustawienia, żeby po prostu leciało, aż nie będzie błedu...
         self.authors_collection = utils.create_named_dataframe()
         for page_num in range(1, self.n_pages + 1):
-            self.create_parser_url(page_num)
-            self.get_articles_urls()
+            self.create_parser_url(page_num)  # todo tutaj coś nie gra - to jest chyba niepotrzebne
+            self.get_articles_urls()  # todo tutaj tez cos nie gra, bo niby ograniczam ile razy ma iterować,
+            # ale potem wrzucam go w while, który iteruje az mu sie nie skonczą strony. Wygląda na to,
+            # że tutaj ta pętla for jest do wywalenia. trzeba tylko sprzedać do while,
+            # że albo ma lecieć aż nie skończy, albo ma skończyć po iluś pętlach
 
             for i, pub_url in enumerate(self.articles_urls):
                 parsed_article = Article(pub_url)
@@ -74,13 +81,15 @@ class ScienceDirectParser:
                 self.parsed_articles.append(parsed_article)
                 self.add_records_to_collection(parsed_article.article_data_df)
                 print(f'{i + 1}/{len(self.articles_urls)} parsed')
-        file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        utils.write_data_coll_to_file(self.authors_collection, file_name)
+        self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
+        self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
+        self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
+        self.collection_xlsx_buffer = utils.write_to_xlsx(self.authors_collection)
 
 
 if __name__ == '__main__':
     science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=4, n_pages=1,
-                                  years=[x for x in range(2016, 2020)])
+                                  years=[x for x in range(2016, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
     #                               years=[2021])

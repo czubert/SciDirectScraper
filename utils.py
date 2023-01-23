@@ -1,14 +1,18 @@
+from typing import io
+
 import pandas
 import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 import constants
+from io import BytesIO
+import xlsxwriter
 
 
 def does_element_exist(driver, tag):
     try:
-        element_exist = driver.find_element(By.CLASS_NAME, tag).is_displayed()
+        element_exist = driver.find_element(By.CLASS_NAME, tag)  # .is_displayed()
     except NoSuchElementException:
         element_exist = False
         print("Pagination: all pages parsed")
@@ -22,8 +26,24 @@ def write_data_coll_to_file(df: pandas.DataFrame, file_name: str):
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    df.to_csv(f'{path}{file_name}.csv', encoding='utf-16')
-    df.to_excel(f'{path}{file_name}.xlsx')
+    buffer = BytesIO()
+    df.to_csv(buffer)
+    df.to_excel(f'{path}/{file_name}.xlsx')
+    df.to_csv(f'{path}/{file_name}.csv', encoding='utf-16')
+
+    return buffer
+
+
+def write_to_xlsx(df: pandas.DataFrame):
+    buffer = BytesIO()
+
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        df.to_excel(writer)
+
+        writer.save()
+        writer.close()
+
+    return buffer
 
 
 def build_filename(keyword, years, articles_urls, authors_collection):
