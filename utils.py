@@ -1,5 +1,3 @@
-from typing import io
-
 import pandas
 import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
@@ -7,7 +5,6 @@ from selenium.webdriver.common.by import By
 
 import constants
 from io import BytesIO
-import xlsxwriter
 
 
 def does_element_exist(driver, tag):
@@ -26,15 +23,15 @@ def write_data_coll_to_file(df: pandas.DataFrame, file_name: str):
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    buffer = BytesIO()
-    df.to_csv(buffer)
     df.to_excel(f'{path}/{file_name}.xlsx')
     df.to_csv(f'{path}/{file_name}.csv', encoding='utf-16')
 
-    return buffer
+
+def write_xls_csv_to_buffers(df: pandas.DataFrame):
+    return write_xlsx_to_buffer(df), write_csv_to_buffer(df)
 
 
-def write_to_xlsx(df: pandas.DataFrame):
+def write_xlsx_to_buffer(df: pandas.DataFrame):
     buffer = BytesIO()
 
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -42,6 +39,13 @@ def write_to_xlsx(df: pandas.DataFrame):
 
         writer.save()
         writer.close()
+
+    return buffer
+
+
+def write_csv_to_buffer(df: pandas.DataFrame):
+    buffer = BytesIO()
+    df.to_csv(buffer)
 
     return buffer
 

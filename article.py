@@ -4,7 +4,7 @@ import time
 import pandas as pd
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -33,7 +33,11 @@ class Article:
     def click_author_buttons(self, auth, sleep=1):
         actions = ActionChains(self.driver)
         actions.click(auth)
-        actions.perform()
+        try:
+            actions.perform()
+        except ElementNotInteractableException as e:
+            print(f'clicking authors button faild:{e}')
+
         time.sleep(sleep)
 
     def get_article_meta(self, soup):
@@ -69,6 +73,9 @@ class Article:
                 elif re.search(r'\d{4}(?=,\sPages)',  year):
                     pattern = r'\d{4}(?=,\sPages)'
                     year = re.findall(pattern, year)
+                elif re.search(r'^(Available).*(\d{4})$',  year):
+                    pattern = r'(\d{4})$'
+                    year = re.findall(pattern, year)
 
                 if len(year) > 0:
                     self.year = year[0]
@@ -100,7 +107,7 @@ class Article:
     def parse_article(self):
         try:
             self.get_driver(sleep=1)
-            button = self.driver.find_elements(By.CLASS_NAME, 'workspace-trigger')
+            button = self.driver.find_elements(By.CLASS_NAME, 'author')
             for corr_author in button:  # Goes through all the authors )
                 self.click_author_buttons(corr_author, sleep=1)
                 soup = BeautifulSoup(self.driver.page_source, 'html.parser')
