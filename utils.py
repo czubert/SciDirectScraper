@@ -1,6 +1,8 @@
+import time
+
 import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from io import BytesIO
@@ -91,6 +93,8 @@ def open_link_in_new_tab(driver, url):
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])
     driver.get(url)
+    time.sleep(0.1)
+
     return driver
 
 
@@ -100,4 +104,3 @@ def close_link_tab(driver):
 
     # Switching to old tab
     driver.switch_to.window(driver.window_handles[0])
-

@@ -2,11 +2,9 @@ import time
 
 import pandas as pd
 import streamlit as st
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service as ChromeService
 
 import utils
 from article import Article
@@ -44,7 +42,8 @@ class ScienceDirectParser:
         st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
 
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 3)
+        wait2 = WebDriverWait(driver, 1.5)
 
         if self.requested_num_of_publ == 0:
             n_loops = -1
@@ -64,7 +63,7 @@ class ScienceDirectParser:
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
             if utils.does_element_exist(driver, tag=self.next_class_name):
-                wait.until(EC.visibility_of_element_located((By.CLASS_NAME, self.next_class_name))).click()
+                wait2.until(EC.visibility_of_element_located((By.CLASS_NAME, self.next_class_name))).click()
                 info = f'{len(self.articles_urls)} addresses extracted'
                 print(info)
                 st.sidebar.write(info)

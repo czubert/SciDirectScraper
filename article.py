@@ -1,15 +1,11 @@
 import re
-import time
 
 import pandas as pd
 from bs4 import BeautifulSoup
-from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService
 
-import constants
 import utils
 from author import Author
 
@@ -95,14 +91,14 @@ class Article:
             actions.perform()
         except ElementNotInteractableException as e:
             print(f'clicking authors button faild:{e}')
+        # time.sleep(0.25)
 
     def parse_article(self, driver):
         try:
             driver = utils.open_link_in_new_tab(driver, self.url)
-            button = driver.find_elements(By.CLASS_NAME, 'author')
+            # button = driver.find_elements(By.CLASS_NAME, 'author')
+            button = driver.find_elements(By.XPATH, '//div[@class="author-group"]/button')
             for corr_author in button:  # Goes through all the authors )
-                print('dupa')
-                time.sleep(0.1)
                 Article.click_author_buttons(driver, corr_author)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
