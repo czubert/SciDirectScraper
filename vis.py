@@ -108,6 +108,8 @@ if btn:
         )
     except TypeError:
         pass
+    except RuntimeError as e:
+        print(f'Runtime error ({e})')
 
     try:
         st.download_button(
@@ -118,6 +120,8 @@ if btn:
         )
     except TypeError:
         pass
+    except RuntimeError as e:
+        print(f'Runtime error ({e})')
 
     exp = st.expander('Show data')
     with exp:

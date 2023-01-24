@@ -75,6 +75,8 @@ def initialize_driver():
     options = webdriver.ChromeOptions()
     # to open maximized window
     options.add_argument("start-maximized")
+    # options.add_argument("--headless")
+
     # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     driver = webdriver.Chrome(service=ChromeService(), options=options)
@@ -89,13 +91,13 @@ def open_link_in_new_tab(driver, url):
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])
     driver.get(url)
+    return driver
 
 
-def open_link_in_new_tab(driver):
+def close_link_tab(driver):
     # Closing new_url tab
     driver.close()
 
     # Switching to old tab
     driver.switch_to.window(driver.window_handles[0])
 
-    return driver

@@ -14,14 +14,6 @@ import utils
 from author import Author
 
 
-def click_author_buttons(driver, auth):
-    actions = ActionChains(driver)
-    actions.click(auth)
-    try:
-        actions.perform()
-    except ElementNotInteractableException as e:
-        print(f'clicking authors button faild:{e}')
-
 class Article:
     def __init__(self, pub_url):
         self.year = None
@@ -95,19 +87,28 @@ class Article:
             df.index.name = 'id'
             self.article_data_df = self.article_data_df.append(df)
 
+    @staticmethod
+    def click_author_buttons(driver, auth):
+        actions = ActionChains(driver)
+        actions.click(auth)
+        try:
+            actions.perform()
+        except ElementNotInteractableException as e:
+            print(f'clicking authors button faild:{e}')
+
     def parse_article(self, driver):
         try:
-
             driver = utils.open_link_in_new_tab(driver, self.url)
             button = driver.find_elements(By.CLASS_NAME, 'author')
             for corr_author in button:  # Goes through all the authors )
+                print('dupa')
                 time.sleep(0.1)
-                click_author_buttons(driver, corr_author)
+                Article.click_author_buttons(driver, corr_author)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
                     self.get_article_meta(soup)
                     self.get_author_meta(data)
-
+            utils.close_link_tab(driver)
             self.add_records_to_df()
         except NoSuchElementException:
             pass
