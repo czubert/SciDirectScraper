@@ -11,13 +11,14 @@ from article import Article
 
 
 class ScienceDirectParser:
-    def __init__(self, keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2, years=[2022]):
+    def __init__(self, window, keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2, years=[2022]):
         # Parsing
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
         self.next_class_name = 'next-link'
         self.soup = None
         self.articles_urls = []
+        self.window = window
         # searching parameters
         self.keyword = keyword
         self.pub_per_page = 25 * pub_per_page_multi25
@@ -105,7 +106,7 @@ class ScienceDirectParser:
         self.create_parser_url()
 
         # # # Beginning "Initialize driver" # # #
-        driver = utils.initialize_driver()
+        driver = utils.initialize_driver(self.window)
         # Opens initial URL, and parse urls of all publications page by page
         with st.spinner('Wait while program is extracting publications urls...'):
             self.get_articles_urls(driver)

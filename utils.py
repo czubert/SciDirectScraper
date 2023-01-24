@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from io import BytesIO
+from subprocess import CREATE_NO_WINDOW
 
 import constants
 
@@ -73,15 +74,20 @@ def create_named_dataframe():
     return df
 
 
-def initialize_driver():
+def initialize_driver(window):
     options = webdriver.ChromeOptions()
-    # to open maximized window
-    options.add_argument("start-maximized")
-    # options.add_argument("--headless")
-
-    # to supress the error messages/logs
+    # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    driver = webdriver.Chrome(service=ChromeService(), options=options)
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
+
+    # Initialising Driver with preset options
+    driver = webdriver.Chrome(service=ChromeService('chromedriver'), options=options)
+
+    if window == 'Maximized':
+        driver.maximize_window()
+    elif window == 'Hidden':
+        driver.set_window_position(-2000, 0)
 
     return driver
 
@@ -93,7 +99,7 @@ def open_link_in_new_tab(driver, url):
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])
     driver.get(url)
-    time.sleep(0.1)
+    time.sleep(0.05)
 
     return driver
 

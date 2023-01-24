@@ -1,5 +1,7 @@
 import time
 import streamlit as st
+
+import vis_helper
 from main import ScienceDirectParser
 
 st.set_page_config(layout="wide",
@@ -26,6 +28,11 @@ st.sidebar.title("Log:")
 # STYLE
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 st.subheader('SciDirectScraper')
+setup = st.expander("Setup")
+
+with setup:
+    window = st.radio('Windows opening properties', ['Standard', 'Maximized', 'Hidden'])
+
 st.warning('The only requirement to run this app is to have installed Google Chrome on your computer')
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -78,7 +85,8 @@ with btn_col2:
 parser = ScienceDirectParser(keyword=key_word,
                              pub_per_page_multi25=pubs_per_page,
                              requested_num_of_publ=pages,
-                             years=selected_year)
+                             years=selected_year,
+                             window=window)
 
 if btn:
     start_time = time.time()
