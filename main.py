@@ -50,7 +50,7 @@ class ScienceDirectParser:
         driver = webdriver.Chrome(service=ChromeService(), options=options)
 
         driver.get(self.parser_url)
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 5)
 
         if self.requested_num_of_publ == 0:
             n_loops = -1
