@@ -14,40 +14,22 @@ import utils
 from author import Author
 
 
+def click_author_buttons(driver, auth):
+    actions = ActionChains(driver)
+    actions.click(auth)
+    try:
+        actions.perform()
+    except ElementNotInteractableException as e:
+        print(f'clicking authors button faild:{e}')
+
 class Article:
-    def __init__(self, url):
+    def __init__(self, pub_url):
         self.year = None
-        self.url = url
+        self.url = pub_url
         self.paper_title = ''
         self.doi = ''
-        self.driver = None
         self.corr_authors = []
         self.article_data_df = None
-
-    def get_driver(self, sleep=0.1):
-        options = webdriver.ChromeOptions()
-        # to open maximized window
-        options.add_argument("start-maximized")
-
-        # # to not open the browser
-        # options.addArguments("--headless")
-
-        # to supress the error messages/logs
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        self.driver = webdriver.Chrome(service=ChromeService(), options=options)
-
-        self.driver.get(self.url)
-        time.sleep(sleep)
-
-    def click_author_buttons(self, auth, sleep=1):
-        actions = ActionChains(self.driver)
-        actions.click(auth)
-        try:
-            actions.perform()
-        except ElementNotInteractableException as e:
-            print(f'clicking authors button faild:{e}')
-
-        time.sleep(sleep)
 
     def get_article_meta(self, soup):
         self.get_doi(soup)
@@ -76,13 +58,13 @@ class Article:
                 if re.search(r'<!-- -->', year):
                     pattern = r'\d{4}(?=<!-- -->'
                     year = re.findall(pattern, year)
-                elif re.search(r'\d{4}(?=,\s\d{6}$)',  year):
+                elif re.search(r'\d{4}(?=,\s\d{6}$)', year):
                     pattern = r'\d{4}(?=,\s\d{6}$)'
                     year = re.findall(pattern, year)
-                elif re.search(r'\d{4}(?=,\sPages)',  year):
+                elif re.search(r'\d{4}(?=,\sPages)', year):
                     pattern = r'\d{4}(?=,\sPages)'
                     year = re.findall(pattern, year)
-                elif re.search(r'^(Available).*(\d{4})$',  year):
+                elif re.search(r'^(Available).*(\d{4})$', year):
                     pattern = r'(\d{4})$'
                     year = re.findall(pattern, year)
 
@@ -113,17 +95,18 @@ class Article:
             df.index.name = 'id'
             self.article_data_df = self.article_data_df.append(df)
 
-    def parse_article(self):
+    def parse_article(self, driver):
         try:
-            self.get_driver(sleep=0.1)
-            button = self.driver.find_elements(By.CLASS_NAME, 'author')
+
+            driver = utils.open_link_in_new_tab(driver, self.url)
+            button = driver.find_elements(By.CLASS_NAME, 'author')
             for corr_author in button:  # Goes through all the authors )
-                self.click_author_buttons(corr_author, sleep=1)
-                soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+                time.sleep(0.1)
+                click_author_buttons(driver, corr_author)
+                soup = BeautifulSoup(driver.page_source, 'html.parser')
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
                     self.get_article_meta(soup)
                     self.get_author_meta(data)
-            self.driver.close()
 
             self.add_records_to_df()
         except NoSuchElementException:

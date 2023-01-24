@@ -40,16 +40,10 @@ class ScienceDirectParser:
         offset = 0
         self.parser_url = f'{self.core_url}{self.keyword}&years={url_years}&show={self.pub_per_page}&offset={offset}'
 
-    def get_articles_urls(self):
+    def get_articles_urls(self, driver):
         st.sidebar.subheader("Extracting urls:")
-        options = webdriver.ChromeOptions()
-        # to open maximized window
-        options.add_argument("start-maximized")
-        # to supress the error messages/logs
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        driver = webdriver.Chrome(service=ChromeService(), options=options)
-
         driver.get(self.parser_url)
+
         wait = WebDriverWait(driver, 10)
 
         if self.requested_num_of_publ == 0:
@@ -78,7 +72,7 @@ class ScienceDirectParser:
                 break
             i += 1
 
-    def parse_articles(self):
+    def parse_articles(self, driver):
         st.sidebar.subheader("Parsing authors data:")
         progress_bar = st.sidebar.progress(0)
 
@@ -93,7 +87,7 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(self.articles_urls[:self.requested_num_of_publ]):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article()
+            parsed_article.parse_article(driver)
             self.parsed_articles.append(parsed_article)
             self.add_records_to_collection(parsed_article.article_data_df)
 
@@ -108,14 +102,20 @@ class ScienceDirectParser:
         # DataFrame to collect all corresponding authors
         self.authors_collection = utils.create_named_dataframe()
 
-        # creates an initial URL for parsing
+        # Creates an initial URL for parsing
         self.create_parser_url()
 
+        # # # Beginning "Initialize driver" # # #
+        driver = utils.initialize_driver()
+        # Opens initial URL, and parse urls of all publications page by page
         with st.spinner('Wait while program is extracting publications urls...'):
-            self.get_articles_urls()  # opens initial URL (SciDirect), and parse urls of all publications page by page
+            self.get_articles_urls(driver)
         st.sidebar.success(f'Total: {len(self.articles_urls)} addresses extracted')
+        # Takes open driver and opens the tabs in it
+        self.parse_articles(driver)
+        driver.close()
+        # # # End "Initialize driver" # # #
 
-        self.parse_articles()
         self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
         self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
         self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)

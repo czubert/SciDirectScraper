@@ -1,10 +1,11 @@
-import pandas
 import pandas as pd
-from selenium.common.exceptions import NoSuchElementException
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService
+from io import BytesIO
 
 import constants
-from io import BytesIO
 
 
 def does_element_exist(driver, tag):
@@ -17,7 +18,7 @@ def does_element_exist(driver, tag):
     return element_exist
 
 
-def write_data_coll_to_file(df: pandas.DataFrame, file_name: str):
+def write_data_coll_to_file(df: pd.DataFrame, file_name: str):
     import os
     path = 'output'
     if not os.path.isdir(path):
@@ -27,11 +28,11 @@ def write_data_coll_to_file(df: pandas.DataFrame, file_name: str):
     df.to_csv(f'{path}/{file_name}.csv', encoding='utf-16')
 
 
-def write_xls_csv_to_buffers(df: pandas.DataFrame):
+def write_xls_csv_to_buffers(df: pd.DataFrame):
     return write_xlsx_to_buffer(df), write_csv_to_buffer(df)
 
 
-def write_xlsx_to_buffer(df: pandas.DataFrame):
+def write_xlsx_to_buffer(df: pd.DataFrame):
     buffer = BytesIO()
 
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -43,7 +44,7 @@ def write_xlsx_to_buffer(df: pandas.DataFrame):
     return buffer
 
 
-def write_csv_to_buffer(df: pandas.DataFrame):
+def write_csv_to_buffer(df: pd.DataFrame):
     buffer = BytesIO()
     df.to_csv(buffer)
 
@@ -68,3 +69,33 @@ def create_named_dataframe():
     df = pd.DataFrame(columns=columns)
     df.index.name = 'id'
     return df
+
+
+def initialize_driver():
+    options = webdriver.ChromeOptions()
+    # to open maximized window
+    options.add_argument("start-maximized")
+    # to supress the error messages/logs
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    driver = webdriver.Chrome(service=ChromeService(), options=options)
+
+    return driver
+
+
+def open_link_in_new_tab(driver, url):
+    # Open a new tab
+    driver.execute_script("window.open('');")
+
+    # Switch to the new tab and open new URL
+    driver.switch_to.window(driver.window_handles[1])
+    driver.get(url)
+
+
+def open_link_in_new_tab(driver):
+    # Closing new_url tab
+    driver.close()
+
+    # Switching to old tab
+    driver.switch_to.window(driver.window_handles[0])
+
+    return driver
