@@ -42,7 +42,12 @@ class ScienceDirectParser:
 
     def get_articles_urls(self):
         st.sidebar.subheader("Extracting urls:")
-        driver = webdriver.Chrome(service=ChromeService())
+        options = webdriver.ChromeOptions()
+        # to open maximized window
+        options.add_argument("start-maximized")
+        # to supress the error messages/logs
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        driver = webdriver.Chrome(service=ChromeService(), options=options)
 
         driver.get(self.parser_url)
         wait = WebDriverWait(driver, 10)

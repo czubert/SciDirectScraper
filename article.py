@@ -24,8 +24,17 @@ class Article:
         self.corr_authors = []
         self.article_data_df = None
 
-    def get_driver(self, sleep=1):
-        self.driver = webdriver.Chrome(service=ChromeService())
+    def get_driver(self, sleep=0.1):
+        options = webdriver.ChromeOptions()
+        # to open maximized window
+        options.add_argument("start-maximized")
+
+        # # to not open the browser
+        # options.addArguments("--headless")
+
+        # to supress the error messages/logs
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        self.driver = webdriver.Chrome(service=ChromeService(), options=options)
 
         self.driver.get(self.url)
         time.sleep(sleep)
@@ -106,7 +115,7 @@ class Article:
 
     def parse_article(self):
         try:
-            self.get_driver(sleep=1)
+            self.get_driver(sleep=0.1)
             button = self.driver.find_elements(By.CLASS_NAME, 'author')
             for corr_author in button:  # Goes through all the authors )
                 self.click_author_buttons(corr_author, sleep=1)

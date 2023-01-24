@@ -60,9 +60,11 @@ if year == 'Single':
         selected_year = [year_single]
 else:
     with col_year2:
-        year_from = int(st.number_input('Provide a year "from":', min_value=1900, max_value=2023, value=2022, step=1, key='from'))
+        year_from = int(
+            st.number_input('Provide a year "from":', min_value=1900, max_value=2023, value=2022, step=1, key='from'))
     with col_year3:
-        year_to = int(st.number_input('Provide a year "to":', min_value=1900, max_value=2023, value=2022, step=1, key='to'))
+        year_to = int(
+            st.number_input('Provide a year "to":', min_value=1900, max_value=2023, value=2022, step=1, key='to'))
         selected_year = [year_from, year_to]
 
 # # # PARSER + BUTTON # # #
@@ -84,16 +86,17 @@ if btn:
         parser.scrap()
     except Exception as e:
         st.error(f'Something went wrong. Exception:{e}')
-    parsing_time = time.time() - start_time
-    unit = 's'
-    if parsing_time > 60:
-        parsing_time = parsing_time / 60
-        unit = 'min'
-    if parsing_time > 3600:
-        parsing_time = parsing_time / 3600
-        unit = 'h'
 
-    st.sidebar.write(f'Total time: {round(parsing_time, 2)} {unit}')
+    parsing_time = time.time() - start_time
+
+    if parsing_time < 60:
+        parsing_time = f'{round(parsing_time, 2)} s'
+    elif parsing_time > 60:
+        parsing_time = f'{parsing_time // 60} m {4300 % 3600 % 60} s'
+    elif parsing_time > 3600:
+        parsing_time = f'{parsing_time // 3600} h {4300 % 3600 // 60} m {4300 % 3600 % 60} s'
+
+    st.sidebar.write(f'Total time: {parsing_time}')
     st.success('Articles parsed successfully!, to download - click the button below')
 
     try:
