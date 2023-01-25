@@ -13,7 +13,7 @@ import constants
 
 def does_element_exist(driver, tag):
     try:
-        element_exist = driver.find_element(By.CLASS_NAME, tag)  # .is_displayed()
+        element_exist = driver.find_element(By.LINK_TEXT, tag)  # .is_displayed()
     except NoSuchElementException:
         element_exist = False
         print("Pagination: all pages parsed")
@@ -79,7 +79,7 @@ def initialize_driver(window):
     # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
+    options.add_experimental_option('useAutomationExtension', True)
 
     # Initialising Driver with preset options
     driver = webdriver.Chrome(service=ChromeService('chromedriver'), options=options)

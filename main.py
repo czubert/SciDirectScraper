@@ -11,11 +11,13 @@ from article import Article
 
 
 class ScienceDirectParser:
-    def __init__(self, window, keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2, years=[2022]):
+    def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
+                 years=[2022]):
         # Parsing
+        self.link = None
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
-        self.next_class_name = 'next-link'
+        self.next_class_name = 'next'
         self.soup = None
         self.articles_urls = []
         self.window = window
@@ -43,8 +45,7 @@ class ScienceDirectParser:
         st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
 
-        wait = WebDriverWait(driver, 3)
-        wait2 = WebDriverWait(driver, 1.5)
+        wait = WebDriverWait(driver, 10)
 
         if self.requested_num_of_publ == 0:
             n_loops = -1
@@ -54,7 +55,7 @@ class ScienceDirectParser:
 
         while i != n_loops:
             # Short break so the server do not block script
-            time.sleep(0.1)
+            time.sleep(0.7)  # important: lower values result in error
 
             # Parse web for urls
             self.articles_urls += [item.get_attribute("href") for item in wait.until(
@@ -64,7 +65,10 @@ class ScienceDirectParser:
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
             if utils.does_element_exist(driver, tag=self.next_class_name):
-                wait2.until(EC.visibility_of_element_located((By.CLASS_NAME, self.next_class_name))).click()
+                # wait2.until(EC.visibility_of_element_located((By.LINK_TEXT, self.next_class_name))).click()
+                # wait.until(EC.element_to_be_clickable((By.LINK_TEXT, self.next_class_name))).click()
+                wait.until(EC.presence_of_element_located((By.LINK_TEXT, self.next_class_name))).click()
+
                 info = f'{len(self.articles_urls)} addresses extracted'
                 print(info)
                 st.sidebar.write(info)
@@ -104,13 +108,14 @@ class ScienceDirectParser:
 
         # Creates an initial URL for parsing
         self.create_parser_url()
-
         # # # Beginning "Initialize driver" # # #
         driver = utils.initialize_driver(self.window)
+
         # Opens initial URL, and parse urls of all publications page by page
         with st.spinner('Wait while program is extracting publications urls...'):
             self.get_articles_urls(driver)
         st.sidebar.success(f'Total: {len(self.articles_urls)} addresses extracted')
+
         # Takes open driver and opens the tabs in it
         self.parse_articles(driver)
         driver.close()
@@ -123,8 +128,8 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=4, requested_num_of_publ=12,
-                                  years=[x for x in range(2016, 2023)])
+    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=4, requested_num_of_publ=1200,
+                                  years=[x for x in range(2022, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
     #                               years=[2021])
