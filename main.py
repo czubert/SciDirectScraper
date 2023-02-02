@@ -46,35 +46,29 @@ class ScienceDirectParser:
         driver.get(self.parser_url)
 
         wait = WebDriverWait(driver, 10)
+        time.sleep(1.2)
+        # driver.find_element_by_xpath("(//div[@class='FacetItem'])[2]")
+        pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[2]/fieldset/ol")[0]
+        show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
+        show_more_btn.click()
 
-        if self.requested_num_of_publ == 0:
-            n_loops = -1
-        else:
-            n_loops = (self.requested_num_of_publ // self.pub_per_page) + 1
-        i = 0
+        options = pub_categories.find_elements(By.TAG_NAME, 'li')
+        from selenium.common.exceptions import StaleElementReferenceException
+        for option in options:
+            try:
+                option.click()  # select box
 
-        while i != n_loops:
-            # Short break so the server do not block script
-            time.sleep(0.7)  # important: lower values result in error
+                pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
+                                   self.next_class_name, driver, wait]
 
-            # Parse web for urls
-            self.articles_urls += [item.get_attribute("href") for item in wait.until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
+                driver = utils.paginate(*pagination_args)
 
-            # Scrolls to the bottom to avoid 'feedback' pop-up
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                option.click()  # unselect box
 
-            if utils.does_element_exist(driver, tag=self.next_class_name):
-                # wait2.until(EC.visibility_of_element_located((By.LINK_TEXT, self.next_class_name))).click()
-                # wait.until(EC.element_to_be_clickable((By.LINK_TEXT, self.next_class_name))).click()
-                wait.until(EC.presence_of_element_located((By.LINK_TEXT, self.next_class_name))).click()
-
-                info = f'{len(self.articles_urls)} addresses extracted'
-                print(info)
-                st.sidebar.write(info)
-            else:
-                break
-            i += 1
+            except StaleElementReferenceException as e:
+                print(f'Problem with click() on pub categories options. Msg: {e}')
+            finally:
+                pass
 
     def parse_articles(self, driver):
         st.sidebar.subheader("Parsing authors data:")
@@ -111,20 +105,20 @@ class ScienceDirectParser:
         # # # Beginning "Initialize driver" # # #
         driver = utils.initialize_driver(self.window)
 
-        # Opens initial URL, and parse urls of all publications page by page
+        # Opens search engine from initial URL. Parse all publications urls page by page
         with st.spinner('Wait while program is extracting publications urls...'):
             self.get_articles_urls(driver)
         st.sidebar.success(f'Total: {len(self.articles_urls)} addresses extracted')
 
-        # Takes open driver and opens the tabs in it
+        # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
         driver.close()
         # # # End "Initialize driver" # # #
 
-        self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
-        self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
-        self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
+        # self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
+        # self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
+        # self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
+        # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
 
 if __name__ == '__main__':

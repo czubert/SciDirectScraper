@@ -1,12 +1,14 @@
 import time
 
+import streamlit as st
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from io import BytesIO
-from subprocess import CREATE_NO_WINDOW
 
 import constants
 
@@ -82,8 +84,11 @@ def initialize_driver(window):
     options.add_experimental_option('useAutomationExtension', True)
 
     # Initialising Driver with preset options
-    driver = webdriver.Chrome(service=ChromeService('chromedriver'), options=options)
-
+    # driver = webdriver.Chrome(service=ChromeService('chromedriver'), options=options)
+    from selenium.webdriver.edge.service import Service
+    service = Service(verbose=True)
+    driver = webdriver.Edge(service=service)
+    time.sleep(0.7)
     if window == 'Maximized':
         driver.maximize_window()
     elif window == 'Hidden':
@@ -110,3 +115,50 @@ def close_link_tab(driver):
 
     # Switching to old tab
     driver.switch_to.window(driver.window_handles[0])
+    return driver
+
+
+def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name, driver, wait):
+    if requested_num_of_publ == 0:
+        n_loops = -1
+    else:
+        n_loops = (requested_num_of_publ // pub_per_page) + 1
+
+    open_tab = True
+    i = 0
+
+    while i != n_loops:
+        # Short break so the server do not block script
+        time.sleep(0.7)  # important: lower values result in error
+
+        # Parse web for urls
+        articles_urls += [item.get_attribute("href") for item in wait.until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
+
+        # Scrolls to the bottom to avoid 'feedback' pop-up
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+        if does_element_exist(driver, tag=next_class_name):
+            if open_tab:
+                # It is openning 'next button; in new tab instead of clicking it, so the pub categories do not hide
+                url = wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).get_attribute('href')
+                driver = open_link_in_new_tab(driver, url)
+                open_tab = False
+                continue
+
+            wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).click()
+
+            info = f'{len(articles_urls)} addresses extracted'
+            print(info)
+            st.sidebar.write(info)
+
+        else:
+            try:
+                driver = close_link_tab(driver)
+                open_tab = False
+            except InvalidSessionIdException:
+                print('Pagination finished')
+            finally:
+                return driver
+
+        i += 1
