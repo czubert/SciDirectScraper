@@ -4,7 +4,6 @@ import pandas as pd
 import streamlit as st
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from tqdm import tqdm
 
 import utils
@@ -13,7 +12,7 @@ from article import Article
 
 class ScienceDirectParser:
     def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
-                 years=[2022]):
+                 years=tuple([2022])):
         # Parsing
         self.link = None
         self.parser_url = ''
@@ -50,8 +49,11 @@ class ScienceDirectParser:
         time.sleep(1.7)
         # driver.find_element_by_xpath("(//div[@class='FacetItem'])[2]")
         pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[2]/fieldset/ol")[0]
-        show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
-        show_more_btn.click()
+        try:
+            show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
+            show_more_btn.click()
+        except IndexError:
+            pass
 
         options = pub_categories.find_elements(By.TAG_NAME, 'li')
         from selenium.common.exceptions import StaleElementReferenceException
@@ -67,9 +69,8 @@ class ScienceDirectParser:
                 option.click()  # unselect box
 
             except StaleElementReferenceException as e:
-                print(f'Problem with click() on pub categories options. Msg: {e}')
-            finally:
                 pass
+
 
     def parse_articles(self, driver):
         st.sidebar.subheader("Parsing authors data:")
@@ -103,18 +104,22 @@ class ScienceDirectParser:
 
         # Creates an initial URL for parsing
         self.create_parser_url()
+
         # # # Beginning "Initialize driver" # # #
         driver = utils.initialize_driver(self.window)
 
         # Opens search engine from initial URL. Parse all publications urls page by page
         with st.spinner('Wait while program is extracting publications urls...'):
             self.get_articles_urls(driver)
+        # progressbar at sidebar
         st.sidebar.success(f'Total: {len(self.articles_urls)} addresses extracted')
 
         # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
         driver.close()
         # # # End "Initialize driver" # # #
+
+        utils.data_processing(self.authors_collection)
 
         self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
         self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
@@ -123,8 +128,8 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=4, requested_num_of_publ=0,
-                                  years=[x for x in range(2022, 2023)])
+    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=30,
+                                  years=[x for x in range(2023, 2024)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
     #                               years=[2021])

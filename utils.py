@@ -1,15 +1,15 @@
 import time
-
 import streamlit as st
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
+from io import BytesIO
+from tqdm import tqdm
+# Selenium
+from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService
-from io import BytesIO
 
+# Modules
 import constants
 
 
@@ -18,7 +18,6 @@ def does_element_exist(driver, tag):
         element_exist = driver.find_element(By.LINK_TEXT, tag)  # .is_displayed()
     except NoSuchElementException:
         element_exist = False
-        print("Pagination: all pages parsed")
 
     return element_exist
 
@@ -123,9 +122,9 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
         n_loops = -1
     else:
         n_loops = (requested_num_of_publ // pub_per_page) + 1
-
+    n = 10
     i = 0
-
+    progress = tqdm(desc='Pagination', total=n)
     while i != n_loops:
 
         # Short break so the server do not block script
@@ -135,13 +134,11 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
         articles_urls += [item.get_attribute("href") for item in wait.until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
 
+        # Update output progressbar
+        progress.update(1)
+
         # Scrolls to the bottom to avoid 'feedback' pop-up
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-        info = f'{len(articles_urls)} addresses extracted'
-        print(info)
-        st.sidebar.write(info)
-
         if not does_element_exist(driver, tag=next_class_name) and tab is True:
             return driver
 
@@ -159,8 +156,12 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
             try:
                 driver = close_link_tab(driver)
             except InvalidSessionIdException:
-                print('Pagination finished')
+                pass
             finally:
                 return driver
-
         i += 1
+    progress.close()
+
+
+def data_processing(df: pd.DataFrame):
+    return df.drop_duplicates(inplace=True)
