@@ -104,7 +104,7 @@ def open_link_in_new_tab(driver, url):
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])
     driver.get(url)
-    time.sleep(0.05)
+    time.sleep(0.5)
 
     return driver
 
@@ -118,16 +118,16 @@ def close_link_tab(driver):
     return driver
 
 
-def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name, driver, wait):
+def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name, driver, wait, tab=True):
     if requested_num_of_publ == 0:
         n_loops = -1
     else:
         n_loops = (requested_num_of_publ // pub_per_page) + 1
 
-    open_tab = True
     i = 0
 
     while i != n_loops:
+
         # Short break so the server do not block script
         time.sleep(0.7)  # important: lower values result in error
 
@@ -138,24 +138,26 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
         # Scrolls to the bottom to avoid 'feedback' pop-up
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        if does_element_exist(driver, tag=next_class_name):
-            if open_tab:
-                # It is openning 'next button; in new tab instead of clicking it, so the pub categories do not hide
+        info = f'{len(articles_urls)} addresses extracted'
+        print(info)
+        st.sidebar.write(info)
+
+        if not does_element_exist(driver, tag=next_class_name) and tab is True:
+            return driver
+
+        elif does_element_exist(driver, tag=next_class_name):
+            if tab:
+                # It is opening 'next button; in new tab instead of clicking it, so the pub categories do not hide
                 url = wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).get_attribute('href')
                 driver = open_link_in_new_tab(driver, url)
-                open_tab = False
+                tab = False
                 continue
 
             wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).click()
 
-            info = f'{len(articles_urls)} addresses extracted'
-            print(info)
-            st.sidebar.write(info)
-
         else:
             try:
                 driver = close_link_tab(driver)
-                open_tab = False
             except InvalidSessionIdException:
                 print('Pagination finished')
             finally:

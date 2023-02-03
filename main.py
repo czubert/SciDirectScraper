@@ -5,6 +5,7 @@ import streamlit as st
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from tqdm import tqdm
 
 import utils
 from article import Article
@@ -46,7 +47,7 @@ class ScienceDirectParser:
         driver.get(self.parser_url)
 
         wait = WebDriverWait(driver, 10)
-        time.sleep(1.2)
+        time.sleep(1.7)
         # driver.find_element_by_xpath("(//div[@class='FacetItem'])[2]")
         pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[2]/fieldset/ol")[0]
         show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
@@ -83,14 +84,14 @@ class ScienceDirectParser:
             self.requested_num_of_publ = len(self.articles_urls)
 
         # Goes through parsed urls to scrap the corresponding authors data
-        for i, pub_url in enumerate(self.articles_urls[:self.requested_num_of_publ]):
+        for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
             parsed_article.parse_article(driver)
             self.parsed_articles.append(parsed_article)
             self.add_records_to_collection(parsed_article.article_data_df)
 
             # Information about the progress
-            print(f'{i + 1}/{self.requested_num_of_publ} articles parsed')
+            # print(f'{i + 1}/{self.requested_num_of_publ} articles parsed')
             progress_bar.progress((i + 1) / self.requested_num_of_publ)
 
     def add_records_to_collection(self, record):
@@ -115,14 +116,14 @@ class ScienceDirectParser:
         driver.close()
         # # # End "Initialize driver" # # #
 
-        # self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        # self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
-        # self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
-        # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
+        self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
+        self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
+        self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
+        self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=4, requested_num_of_publ=1200,
+    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=4, requested_num_of_publ=0,
                                   years=[x for x in range(2022, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,

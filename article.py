@@ -1,4 +1,5 @@
 import re
+import time
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -91,7 +92,7 @@ class Article:
             actions.perform()
         except ElementNotInteractableException as e:
             print(f'clicking authors button faild:{e}')
-        # time.sleep(0.25)
+        time.sleep(0.25)
 
     def parse_article(self, driver):
         try:
