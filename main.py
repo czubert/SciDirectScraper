@@ -138,9 +138,7 @@ class ScienceDirectParser:
         self.authors_collection = utils.group_by_email(self.authors_collection)
 
         # returns num of a list in each row
-        # self.authors_collection['num_of_publications'] = self.authors_collection['publ_title'].str.len()
         self.authors_collection['num_of_publications'] = [len(x) for x in self.authors_collection['publ_title']]
-        # [print(x) for x in self.authors_collection['publ_title']]
 
         # returns first element of list in each row (returns grouped and agg df)
         def return_first_el(x):
@@ -154,9 +152,6 @@ class ScienceDirectParser:
 
         # Getting only the first publication from all (and their details: year and affiliation)
         self.authors_collection = self.authors_collection.applymap(return_first_el)
-
-        # Removing records which has no "SERS" in title (make it a possibilty)
-        # self.df = df[df.publ_title.str.contains(r"(?i)\bsers\b", regex=True)]
 
         # If someone has different email, but the same name and surname
         self.authors_collection = self.authors_collection.drop_duplicates(['name', 'surname'], keep='first')
