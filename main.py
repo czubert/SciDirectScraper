@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import StaleElementReferenceException
 from tqdm import tqdm
 
 import utils
@@ -15,6 +16,7 @@ class ScienceDirectParser:
     def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
                  years=tuple([2022])):
         # Parsing
+        self.authors_collection = None
         self.link = None
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
@@ -48,26 +50,27 @@ class ScienceDirectParser:
 
         wait = WebDriverWait(driver, 5)
         time.sleep(0.9)
-        pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
         years_pub_nums = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[1]/fieldset/ol")[0]
-        try:
-            show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
-            show_more_btn.click()
-        except IndexError:
-            pass
 
         num_of_papers = 0
         papers = years_pub_nums.text.split()
         for i in range(1, len(papers), 2):
             num_of_papers += int(re.sub(r'([()])*', '', papers[i]))
 
-        # If there is less than 1000 publications, then it is not looping thru pub_categories.
-        print(num_of_papers)
+        # If there is less than 1000 publications, then it is not looping through pub_categories.
         if num_of_papers < 1000:
             pub_categories = years_pub_nums
+        else:
+            pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
+
+        try:
+            show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
+            show_more_btn.click()
+        except IndexError:
+            pass
 
         options = pub_categories.find_elements(By.TAG_NAME, 'li')
-        from selenium.common.exceptions import StaleElementReferenceException
+
         for option in options:
             try:
                 option.click()  # select box
@@ -79,7 +82,7 @@ class ScienceDirectParser:
 
                 option.click()  # unselect box
 
-            except StaleElementReferenceException as e:
+            except StaleElementReferenceException:
                 pass
 
     def parse_articles(self, driver):
@@ -106,6 +109,7 @@ class ScienceDirectParser:
 
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
+        # todo zrobic odczyt i zapis z pliku, zeby dodac nowe linijki i zapisac
 
     def scrap(self):
         # DataFrame to collect all corresponding authors
@@ -130,38 +134,42 @@ class ScienceDirectParser:
 
         # Data Processing, to get rid of repetitions and group by email - so one email appear only once in database
         utils.data_processing(self.authors_collection)
-        df = self.authors_collection
-        # returns grouped and agg df
-        df = df.groupby('email').agg(lambda x: list(x) if (x.name not in ['name', 'surname']) else x[0])
+
+        utils.group_by_email()
 
         # returns num of a list in each row
-        df['num_of_publications'] = df['publ_title'].str.len()
+        # self.authors_collection['num_of_publications'] = self.authors_collection['publ_title'].str.len()
+        # self.df['num_of_publications'] = [len(x) for x in self.df['publ_title']]
+        # [print(x) for x in self.authors_collection['publ_title']]
 
-        # returns first element of list in each row
-        def return_first_el(x):
-            try:
-                if type(x) == list:
-                    return x[0]
-                else:
-                    return x
-            except Exception:
-                pass
+        # # returns first element of list in each row (returns grouped and agg df)
+        # def return_first_el(x):
+        #     try:
+        #         if type(x) == list:
+        #             return x[0]
+        #         else:
+        #             return x
+        #     except Exception:
+        #         pass
 
         # Getting only the first publication from all (and their details: year and affiliation)
-        self.df = df.applymap(return_first_el)
+        # self.authors_collection = self.authors_collection.applymap(return_first_el)
+
+        # Removing records which has no "SERS" in title (make it a possibilty)
+        # self.df = df[df.publ_title.str.contains(r"(?i)\bsers\b", regex=True)]
 
         # If someone has different email, but the same name and surname
-        self.df = self.df.drop_duplicates(['name', 'surname'], keep='first')
+        # self.authors_collection = self.authors_collection.drop_duplicates(['name', 'surname'], keep='first')
 
         # writing to a file
-        # self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        # self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
-        # self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
-        # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
+        self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
+        self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
+        self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
+        self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=1, requested_num_of_publ=30,
+    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=25,
                                   years=[x for x in range(2021, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,

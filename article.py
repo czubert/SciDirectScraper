@@ -61,7 +61,7 @@ class Article:
                     self.year = year[0]
                     break
         except Exception as e:
-            print(f'Getting article title failed! Reason?: {e}')
+            print(f'Getting article year failed! Reason?: {e}')
 
     def get_author_meta(self, data):
         author = Author()
@@ -91,7 +91,7 @@ class Article:
         try:
             actions.perform()
         except ElementNotInteractableException as e:
-            print(f'clicking authors button faild:{e}')
+            print(f'clicking authors button failed:{e}')
         time.sleep(0.25)
 
     def parse_article(self, driver):
