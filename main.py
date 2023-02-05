@@ -149,8 +149,8 @@ class ScienceDirectParser:
                     return x[0]
                 else:
                     return x
-            except Exception:
-                pass
+            except Exception as e:
+                print(e)
 
         # Getting only the first publication from all (and their details: year and affiliation)
         self.authors_collection = self.authors_collection.applymap(return_first_el)
