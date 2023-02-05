@@ -15,8 +15,6 @@ class ScienceDirectParser:
     def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
                  years=tuple([2022])):
         # Parsing
-        self.authors_collection = None
-        self.link = None
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
         self.next_class_name = 'next'
@@ -32,8 +30,6 @@ class ScienceDirectParser:
         self.csv_file = None
         self.file_name = None
         self.authors_collection = None
-        self.parsed_articles = []
-        self.parsed_articles_df = None
         self.coll_csv_buff = None  # for streamlit download button
         self.coll_xlsx_buff = None  # for streamlit download button
 
@@ -46,9 +42,9 @@ class ScienceDirectParser:
     def get_articles_urls(self, driver, pagination_sleep):
         st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
+        time.sleep(pagination_sleep)  # sleep so the browser has time to open
 
         wait = WebDriverWait(driver, 5)
-        time.sleep(1.0)  # sleep so the browser has time to open
 
         pub_categories = pagination.check_if_more_pubs_than_limit(driver)
 
@@ -80,8 +76,8 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article(driver, btn_click_sleep=0.05)
-            self.parsed_articles.append(parsed_article)
+            parsed_article.parse_article(driver, btn_click_sleep=0.01)
+            # self.parsed_articles.append(parsed_article)
             self.add_records_to_collection(parsed_article.article_data_df)
 
             # Information about the progress
@@ -128,6 +124,4 @@ if __name__ == '__main__':
     science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=15,
                                   years=[x for x in range(2010, 2023)])
 
-    # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
-    #                               years=[2021])
     science.scrap()

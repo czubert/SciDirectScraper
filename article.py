@@ -111,7 +111,6 @@ class Article:
 
 
 if __name__ == '__main__':
-    # url = 'https://www.sciencedirect.com/science/article/pii/S0021979722022470'
     url = 'https://www.sciencedirect.com/science/article/pii/S000326701931462X'
     art = Article(url)
-    art.parse_article()
+    art.parse_article(btn_click_sleep=0.1)
