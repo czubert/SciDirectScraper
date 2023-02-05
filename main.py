@@ -1,3 +1,4 @@
+import re
 import time
 
 import pandas as pd
@@ -45,15 +46,25 @@ class ScienceDirectParser:
         st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
 
-        wait = WebDriverWait(driver, 10)
-        time.sleep(1.7)
-        # driver.find_element_by_xpath("(//div[@class='FacetItem'])[2]")
-        pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[2]/fieldset/ol")[0]
+        wait = WebDriverWait(driver, 5)
+        time.sleep(0.9)
+        pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
+        years_pub_nums = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[1]/fieldset/ol")[0]
         try:
             show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
             show_more_btn.click()
         except IndexError:
             pass
+
+        num_of_papers = 0
+        papers = years_pub_nums.text.split()
+        for i in range(1, len(papers), 2):
+            num_of_papers += int(re.sub(r'([()])*', '', papers[i]))
+
+        # If there is less than 1000 publications, then it is not looping thru pub_categories.
+        print(num_of_papers)
+        if num_of_papers < 1000:
+            pub_categories = years_pub_nums
 
         options = pub_categories.find_elements(By.TAG_NAME, 'li')
         from selenium.common.exceptions import StaleElementReferenceException
@@ -70,7 +81,6 @@ class ScienceDirectParser:
 
             except StaleElementReferenceException as e:
                 pass
-
 
     def parse_articles(self, driver):
         st.sidebar.subheader("Parsing authors data:")
@@ -92,7 +102,6 @@ class ScienceDirectParser:
             self.add_records_to_collection(parsed_article.article_data_df)
 
             # Information about the progress
-            # print(f'{i + 1}/{self.requested_num_of_publ} articles parsed')
             progress_bar.progress((i + 1) / self.requested_num_of_publ)
 
     def add_records_to_collection(self, record):
@@ -119,17 +128,41 @@ class ScienceDirectParser:
         driver.close()
         # # # End "Initialize driver" # # #
 
+        # Data Processing, to get rid of repetitions and group by email - so one email appear only once in database
         utils.data_processing(self.authors_collection)
+        df = self.authors_collection
+        # returns grouped and agg df
+        df = df.groupby('email').agg(lambda x: list(x) if (x.name not in ['name', 'surname']) else x[0])
 
-        self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
-        self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
-        self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
+        # returns num of a list in each row
+        df['num_of_publications'] = df['publ_title'].str.len()
+
+        # returns first element of list in each row
+        def return_first_el(x):
+            try:
+                if type(x) == list:
+                    return x[0]
+                else:
+                    return x
+            except Exception:
+                pass
+
+        # Getting only the first publication from all (and their details: year and affiliation)
+        self.df = df.applymap(return_first_el)
+
+        # If someone has different email, but the same name and surname
+        self.df = self.df.drop_duplicates(['name', 'surname'], keep='first')
+
+        # writing to a file
+        # self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
+        # self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
+        # self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
+        # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=30,
-                                  years=[x for x in range(2023, 2024)])
+    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=1, requested_num_of_publ=30,
+                                  years=[x for x in range(2021, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
     #                               years=[2021])

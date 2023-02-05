@@ -87,7 +87,7 @@ def initialize_driver(window):
     from selenium.webdriver.edge.service import Service
     service = Service(verbose=True)
     driver = webdriver.Edge(service=service)
-    time.sleep(0.7)
+    time.sleep(0.1)
     if window == 'Maximized':
         driver.maximize_window()
     elif window == 'Hidden':
@@ -103,7 +103,7 @@ def open_link_in_new_tab(driver, url):
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])
     driver.get(url)
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     return driver
 
