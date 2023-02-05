@@ -165,3 +165,8 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
 
 def data_processing(df: pd.DataFrame):
     return df.drop_duplicates(inplace=True)
+
+
+def group_by_email(df):
+    # returns grouped and agg df
+    return df.groupby('email').agg(lambda x: list(x) if (x.name not in ['name', 'surname']) else x[0])

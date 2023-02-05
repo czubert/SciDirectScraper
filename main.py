@@ -135,31 +135,31 @@ class ScienceDirectParser:
         # Data Processing, to get rid of repetitions and group by email - so one email appear only once in database
         utils.data_processing(self.authors_collection)
 
-        utils.group_by_email()
+        self.authors_collection = utils.group_by_email(self.authors_collection)
 
         # returns num of a list in each row
         # self.authors_collection['num_of_publications'] = self.authors_collection['publ_title'].str.len()
-        # self.df['num_of_publications'] = [len(x) for x in self.df['publ_title']]
+        self.authors_collection['num_of_publications'] = [len(x) for x in self.authors_collection['publ_title']]
         # [print(x) for x in self.authors_collection['publ_title']]
 
-        # # returns first element of list in each row (returns grouped and agg df)
-        # def return_first_el(x):
-        #     try:
-        #         if type(x) == list:
-        #             return x[0]
-        #         else:
-        #             return x
-        #     except Exception:
-        #         pass
+        # returns first element of list in each row (returns grouped and agg df)
+        def return_first_el(x):
+            try:
+                if type(x) == list:
+                    return x[0]
+                else:
+                    return x
+            except Exception:
+                pass
 
         # Getting only the first publication from all (and their details: year and affiliation)
-        # self.authors_collection = self.authors_collection.applymap(return_first_el)
+        self.authors_collection = self.authors_collection.applymap(return_first_el)
 
         # Removing records which has no "SERS" in title (make it a possibilty)
         # self.df = df[df.publ_title.str.contains(r"(?i)\bsers\b", regex=True)]
 
         # If someone has different email, but the same name and surname
-        # self.authors_collection = self.authors_collection.drop_duplicates(['name', 'surname'], keep='first')
+        self.authors_collection = self.authors_collection.drop_duplicates(['name', 'surname'], keep='first')
 
         # writing to a file
         self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
@@ -169,7 +169,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=25,
+    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=15,
                                   years=[x for x in range(2021, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
