@@ -1,13 +1,12 @@
-import re
 import time
 
 import pandas as pd
 import streamlit as st
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import StaleElementReferenceException
 from tqdm import tqdm
 
+import pagination
 import utils
 from article import Article
 
@@ -44,46 +43,27 @@ class ScienceDirectParser:
         offset = 0
         self.parser_url = f'{self.core_url}{self.keyword}&years={url_years}&show={self.pub_per_page}&offset={offset}'
 
-    def get_articles_urls(self, driver):
+    def get_articles_urls(self, driver, pagination_sleep):
         st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
 
         wait = WebDriverWait(driver, 5)
-        time.sleep(0.9)
-        years_pub_nums = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[1]/fieldset/ol")[0]
+        time.sleep(1.0)  # sleep so the browser has time to open
 
-        num_of_papers = 0
-        papers = years_pub_nums.text.split()
-        for i in range(1, len(papers), 2):
-            num_of_papers += int(re.sub(r'([()])*', '', papers[i]))
-
-        # If there is less than 1000 publications, then it is not looping through pub_categories.
-        if num_of_papers < 1000:
-            pub_categories = years_pub_nums
-        else:
-            pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
+        pub_categories = pagination.check_if_more_pubs_than_limit(driver)
 
         try:
             show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
             show_more_btn.click()
-        except IndexError:
-            pass
+        except IndexError as e:
+            print(f'Index error in get articles urls: {e}')
 
-        options = pub_categories.find_elements(By.TAG_NAME, 'li')
+        # Depending on if the number of available publications exceeds 1000,
+        # pagination goes through years/pub title categories
+        pagination_args = [pub_categories, self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
+                           self.next_class_name, driver, wait, pagination_sleep]
 
-        for option in options:
-            try:
-                option.click()  # select box
-
-                pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
-                                   self.next_class_name, driver, wait]
-
-                driver = utils.paginate(*pagination_args)
-
-                option.click()  # unselect box
-
-            except StaleElementReferenceException:
-                pass
+        pagination.paginate_through_cat(*pagination_args)
 
     def parse_articles(self, driver):
         st.sidebar.subheader("Parsing authors data:")
@@ -100,16 +80,17 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article(driver)
+            parsed_article.parse_article(driver, btn_click_sleep=0.05)
             self.parsed_articles.append(parsed_article)
             self.add_records_to_collection(parsed_article.article_data_df)
 
             # Information about the progress
             progress_bar.progress((i + 1) / self.requested_num_of_publ)
+        driver.close()
 
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
-        # todo zrobic odczyt i zapis z pliku, zeby dodac nowe linijki i zapisac
+        # todo saving after each loop not at the end
 
     def scrap(self):
         # DataFrame to collect all corresponding authors
@@ -118,45 +99,25 @@ class ScienceDirectParser:
         # Creates an initial URL for parsing
         self.create_parser_url()
 
-        # # # Beginning "Initialize driver" # # #
+        """
+        Beginning "Initialize driver"
+        """
         driver = utils.initialize_driver(self.window)
 
         # Opens search engine from initial URL. Parse all publications urls page by page
-        with st.spinner('Wait while program is extracting publications urls...'):
-            self.get_articles_urls(driver)
-        # progressbar at sidebar
-        st.sidebar.success(f'Total: {len(self.articles_urls)} addresses extracted')
+        self.get_articles_urls(driver, pagination_sleep=0.7)
 
         # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
-        driver.close()
-        # # # End "Initialize driver" # # #
 
-        # Data Processing, to get rid of repetitions and group by email - so one email appear only once in database
+        """
+        Data Processing         
+        """
         utils.data_processing(self.authors_collection)
 
-        self.authors_collection = utils.group_by_email(self.authors_collection)
-
-        # returns num of a list in each row
-        self.authors_collection['num_of_publications'] = [len(x) for x in self.authors_collection['publ_title']]
-
-        # returns first element of list in each row (returns grouped and agg df)
-        def return_first_el(x):
-            try:
-                if type(x) == list:
-                    return x[0]
-                else:
-                    return x
-            except Exception as e:
-                print(e)
-
-        # Getting only the first publication from all (and their details: year and affiliation)
-        self.authors_collection = self.authors_collection.applymap(return_first_el)
-
-        # If someone has different email, but the same name and surname
-        self.authors_collection = self.authors_collection.drop_duplicates(['name', 'surname'], keep='first')
-
-        # writing to a file
+        """
+        Writing to a file
+        """
         self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
         self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
         self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
@@ -165,7 +126,7 @@ class ScienceDirectParser:
 
 if __name__ == '__main__':
     science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=15,
-                                  years=[x for x in range(2021, 2023)])
+                                  years=[x for x in range(2010, 2023)])
 
     # science = ScienceDirectParser(keyword='SERSitive', pub_per_page_multi25=1, n_pages=1,
     #                               years=[2021])

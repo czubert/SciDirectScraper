@@ -1,3 +1,4 @@
+import re
 import time
 import streamlit as st
 import pandas as pd
@@ -117,55 +118,42 @@ def close_link_tab(driver):
     return driver
 
 
-def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name, driver, wait, tab=True):
-    if requested_num_of_publ == 0:
-        n_loops = -1
-    else:
-        n_loops = (requested_num_of_publ // pub_per_page) + 1
-    n = 10
-    i = 0
-    progress = tqdm(desc='Pagination', total=n)
-    while i != n_loops:
-
-        # Short break so the server do not block script
-        time.sleep(0.7)  # important: lower values result in error
-
-        # Parse web for urls
-        articles_urls += [item.get_attribute("href") for item in wait.until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
-
-        # Update output progressbar
-        progress.update(1)
-
-        # Scrolls to the bottom to avoid 'feedback' pop-up
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        if not does_element_exist(driver, tag=next_class_name) and tab is True:
-            return driver
-
-        elif does_element_exist(driver, tag=next_class_name):
-            if tab:
-                # It is opening 'next button; in new tab instead of clicking it, so the pub categories do not hide
-                url = wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).get_attribute('href')
-                driver = open_link_in_new_tab(driver, url)
-                tab = False
-                continue
-
-            wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).click()
-
-        else:
-            try:
-                driver = close_link_tab(driver)
-            except InvalidSessionIdException:
-                pass
-            finally:
-                return driver
-        i += 1
-    progress.close()
-
-
 def data_processing(df: pd.DataFrame):
-    return df.drop_duplicates(inplace=True)
+    """
+    Getting rid of repetitions and group by email
+    :param df: pd.DataFrame
+    :return: pd.DataFrame
+    """
+    df.drop_duplicates(inplace=True)
 
+    # Groups authors by eamil
+    df = group_by_email(df)
+
+    # Returns num of a list in each row
+    df['num_of_publications'] = [len(x) for x in df['publ_title']]
+
+    # Getting only the first publication from all (and their details: year and affiliation)
+    df = df.applymap(return_first_el)
+
+    # Removing records of the same author with different email
+    df = df.drop_duplicates(['name', 'surname'], keep='first')
+
+    return df
+
+
+def return_first_el(x):
+    """
+    Returns first element of list in each row - for each author (returns grouped and agg df)
+    :param x:
+    :return:
+    """
+    try:
+        if type(x) == list:
+            return x[0]
+        else:
+            return x
+    except Exception as e:
+        print(e)
 
 def group_by_email(df):
     # returns grouped and agg df

@@ -1,6 +1,7 @@
 import time
 import streamlit as st
 
+import vis_helper
 from main import ScienceDirectParser
 
 st.set_page_config(layout="wide",
@@ -40,11 +41,12 @@ with col1:
 
 # # # PAGES # # #
 with col2:
-    pages = int(st.number_input('Number of articles to scrap (set "0" for all available):',
-                                min_value=0, value=1, step=1,
-                                help='If you set more articles than "max articles per page", '
-                                     'then program will go through pages to achieve requested number of articles, '
-                                     'choose how many of them would you like to scrap'))
+    num_of_articles = int(st.number_input('Number of articles to scrap (set "0" for all available):',
+                                          min_value=0, value=1, step=1,
+                                          help='If you set more articles than "max articles per page", '
+                                               'then program will go through pages to achieve '
+                                               'requested number of articles, '
+                                               'choose how many of them would you like to scrap'))
 with col3:
     # # # ARTICLES PER PAGE # # #
     pubs = {1: 25, 2: 50, 3: 75, 4: 100}
@@ -62,16 +64,16 @@ with col_year1:
     year = st.radio('Select a single year or a range of years', ['Single', 'Range'])
 if year == 'Single':
     with col_year2:
-        year_single = int(st.number_input('Provide a year', min_value=1900, max_value=2023, value=2022, step=1))
+        year_single = int(st.number_input('Provide a year', min_value=1900, max_value=2024, value=2022, step=1))
         selected_year = [year_single]
 else:
     with col_year2:
         year_from = int(
-            st.number_input('Provide a year "from":', min_value=1900, max_value=2023, value=2022, step=1, key='from'))
+            st.number_input('Provide a year "from":', min_value=1900, max_value=2024, value=2022, step=1, key='from'))
     with col_year3:
         year_to = int(
-            st.number_input('Provide a year "to":', min_value=1900, max_value=2023, value=2022, step=1, key='to'))
-        selected_year = [year_from, year_to]
+            st.number_input('Provide a year "to":', min_value=1900, max_value=2024, value=2022, step=1, key='to'))
+        selected_year = [x for x in range(year_from, year_to)]
 
 # # # PARSER + BUTTON # # #
 st.markdown("""<hr style="height:1px;border:none;background-color:#ddd; margin:1px" /> """,
@@ -83,28 +85,20 @@ with btn_col2:
 
 parser = ScienceDirectParser(keyword=key_word,
                              pub_per_page_multi25=pubs_per_page,
-                             requested_num_of_publ=pages,
+                             requested_num_of_publ=num_of_articles,
                              years=selected_year,
                              window=window)
 
 if btn:
     start_time = time.time()
     try:
-        parser.scrap()
+        with st.spinner('Wait while program is extracting publications urls...'):
+            parser.scrap()
+            st.sidebar.success(f'Total: {len(parser.articles_urls)} addresses extracted')
     except Exception as e:
         st.error(f'Something went wrong. Exception:{e}')
 
-    parsing_time = time.time() - start_time
-
-    if parsing_time < 60:
-        parsing_time = f'{round(parsing_time, 2)} s'
-    elif parsing_time > 60:
-        parsing_time = f'{parsing_time // 60} m {4300 % 3600 % 60} s'
-    elif parsing_time > 3600:
-        parsing_time = f'{parsing_time // 3600} h {4300 % 3600 // 60} m {4300 % 3600 % 60} s'
-
-    st.sidebar.write(f'Total time: {parsing_time}')
-    st.success('Articles parsed successfully!, to download - click the button below')
+    vis_helper.print_duration(start_time)
 
     try:
         st.download_button(

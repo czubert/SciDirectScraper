@@ -85,21 +85,21 @@ class Article:
             self.article_data_df = self.article_data_df.append(df)
 
     @staticmethod
-    def click_author_buttons(driver, auth):
+    def click_author_buttons(driver, auth, sleep):
         actions = ActionChains(driver)
         actions.click(auth)
         try:
             actions.perform()
         except ElementNotInteractableException as e:
             print(f'clicking authors button failed:{e}')
-        time.sleep(0.25)
+        time.sleep(sleep)
 
-    def parse_article(self, driver):
+    def parse_article(self, driver, btn_click_sleep):
         try:
             driver = utils.open_link_in_new_tab(driver, self.url)
             button = driver.find_elements(By.XPATH, '//div[@class="author-group"]/button')
             for corr_author in button:  # Goes through all the authors )
-                Article.click_author_buttons(driver, corr_author)
+                Article.click_author_buttons(driver, corr_author, btn_click_sleep)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
                     self.get_article_meta(soup)
