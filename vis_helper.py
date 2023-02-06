@@ -12,4 +12,4 @@ def print_duration(start_time):
         parsing_time = f'{parsing_time // 3600} h {4300 % 3600 // 60} m {4300 % 3600 % 60} s'
 
     st.sidebar.write(f'Total time: {parsing_time}')
-    st.success('Articles parsed successfully!, to download - click the button below')
+    st.success('Articles parsed successfully! Saved in the "output" folder in app directory.')

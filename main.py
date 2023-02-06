@@ -126,7 +126,7 @@ class ScienceDirectParser:
         driver = utils.initialize_driver(self.window)
 
         # Opens search engine from initial URL. Parse all publications urls page by page
-        self.get_articles_urls(driver, open_browser_sleep=1.0, pagination_sleep=0.4)
+        self.get_articles_urls(driver, open_browser_sleep=1.2, pagination_sleep=0.2)
 
         # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
@@ -159,6 +159,6 @@ class ScienceDirectParser:
 
 if __name__ == '__main__':
     science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=5,
-                                  years=[x for x in range(2010, 2023)])
+                                  years=[x for x in range(2020, 2023)])
 
     science.main()
