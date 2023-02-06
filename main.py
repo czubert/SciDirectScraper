@@ -80,7 +80,7 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article(driver, btn_click_sleep=0.01)
+            parsed_article.parse_article(driver, btn_click_sleep=0.15)
             # self.add_records_to_collection(parsed_article.article_data_df)
             self.add_records_to_file(parsed_article.article_data_df)
 
@@ -105,9 +105,9 @@ class ScienceDirectParser:
         self.file_name = f'{path}{self.keyword}__{year}__{self.start_time}.csv'
 
         if not os.path.isfile(self.file_name):
-            record.to_csv(self.file_name, mode='a', index='email', header=constants.COLUMNS)
+            record.to_csv(self.file_name, mode='a', header=constants.COLUMNS)
         else:
-            record.to_csv(self.file_name, mode='a', index='email', header=False)
+            record.to_csv(self.file_name, mode='a', header=False)
 
     def scrap(self):
         # Program start time
@@ -126,7 +126,7 @@ class ScienceDirectParser:
         driver = utils.initialize_driver(self.window)
 
         # Opens search engine from initial URL. Parse all publications urls page by page
-        self.get_articles_urls(driver, open_browser_sleep=1.2, pagination_sleep=0.2)
+        self.get_articles_urls(driver, open_browser_sleep=1.0, pagination_sleep=0.1)
 
         # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
@@ -136,17 +136,16 @@ class ScienceDirectParser:
         Data Processing
         """
         self.authors_collection = data_processing.data_processing(pd.read_csv(self.file_name))
-
+        st.write('before sort')
+        st.write(self.authors_collection)
         """
         Writing final version to a file
         """
         self.authors_collection = self.authors_collection.sort_values(by=['year', 'num_of_publications'],
                                                                       ascending=False)
-
+        st.write('after sort')
+        st.write(self.authors_collection)
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
-
-        # todo delete after deleting download button from streamlit
-        # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
     def main(self):
         try:

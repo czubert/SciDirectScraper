@@ -80,6 +80,7 @@ st.markdown("""<hr style="height:1px;border:none;background-color:#ddd; margin:1
             unsafe_allow_html=True)
 
 _, _, _, btn_col2, _, _, _ = st.columns(7)
+
 with btn_col2:
     btn = st.button(label='Run parsing')
 
@@ -92,19 +93,21 @@ parser = ScienceDirectParser(keyword=key_word,
 if btn:
     start_time = time.time()
     try:
-        with st.spinner('Wait while program is extracting publications urls...'):
+        with st.spinner('Wait while program is collecting authors...'):
             parser.main()
-            duration = vis_helper.print_duration(start_time)
+            duration = vis_helper.get_duration(start_time)
             st.sidebar.success(f'Summary:'
                                f'\n* {len(parser.articles_urls)} urls extracted!'
                                f'\n* Authors collected: {parser.authors_collection.shape[0]}'
                                f'\n* Duration: {duration}')
+            st.success('Articles parsed successfully! Saved in the "output" folder in app directory.'
+                       'Below find preview:')
 
     except Exception as e:
         st.error(f'Something went wrong. Exception:{e}')
 
-    exp = st.expander('Show data')
-    with exp:
-        st.write(parser.authors_collection)  # Show results as DataFrame
+    with st.spinner('Program is preparing DataFrame'):
+        with st.expander('Show data'):
+            st.write(parser.authors_collection)  # Show results as DataFrame
 
     st.balloons()
