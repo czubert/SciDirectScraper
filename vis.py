@@ -94,35 +94,14 @@ if btn:
     try:
         with st.spinner('Wait while program is extracting publications urls...'):
             parser.main()
-            st.sidebar.success(f'Total: {len(parser.articles_urls)} addresses extracted')
+            duration = vis_helper.print_duration(start_time)
+            st.sidebar.success(f'Summary:'
+                               f'\n* {len(parser.articles_urls)} urls extracted!'
+                               f'\n* Authors collected: {parser.authors_collection.shape[0]}'
+                               f'\n* Duration: {duration}')
+
     except Exception as e:
         st.error(f'Something went wrong. Exception:{e}')
-
-    vis_helper.print_duration(start_time)
-
-    try:
-        st.download_button(
-            label="Download data as CSV",
-            data=parser.coll_csv_buff,
-            file_name=parser.file_name + '.csv',
-            mime='text/csv',
-        )
-    except TypeError:
-        pass
-    except RuntimeError as e:
-        print(f'Runtime error ({e})')
-
-    try:
-        st.download_button(
-            label="Download Excel worksheets",
-            data=parser.coll_xlsx_buff,
-            file_name="pandas_multiple.xlsx",
-            mime="application/vnd.ms-excel"
-        )
-    except TypeError:
-        pass
-    except RuntimeError as e:
-        print(f'Runtime error ({e})')
 
     exp = st.expander('Show data')
     with exp:
