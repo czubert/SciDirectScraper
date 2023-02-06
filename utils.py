@@ -1,13 +1,11 @@
-import re
+import datetime
+import os
 import time
-import streamlit as st
 import pandas as pd
 from io import BytesIO
-from tqdm import tqdm
 # Selenium
-from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 # Modules
@@ -23,8 +21,13 @@ def does_element_exist(driver, tag):
     return element_exist
 
 
+def get_current_time():
+    now = datetime.datetime.now()
+
+    return f'{now.year}_{now.month}_{now.day}-{now.hour}h_{now.minute}min'
+
+
 def write_data_coll_to_file(df: pd.DataFrame, file_name: str):
-    import os
     path = 'output'
     if not os.path.isdir(path):
         os.mkdir(path)
@@ -154,6 +157,7 @@ def return_first_el(x):
             return x
     except Exception as e:
         print(e)
+
 
 def group_by_email(df):
     # returns grouped and agg df

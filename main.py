@@ -1,3 +1,5 @@
+import datetime
+import os
 import time
 
 import pandas as pd
@@ -15,6 +17,7 @@ class ScienceDirectParser:
     def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
                  years=tuple([2022])):
         # Parsing
+        self.start_time = None
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
         self.next_class_name = 'next'
@@ -77,18 +80,36 @@ class ScienceDirectParser:
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
             parsed_article.parse_article(driver, btn_click_sleep=0.01)
-            # self.parsed_articles.append(parsed_article)
             self.add_records_to_collection(parsed_article.article_data_df)
-
+            self.add_records_to_file(parsed_article.article_data_df)
             # Information about the progress
             progress_bar.progress((i + 1) / self.requested_num_of_publ)
-        driver.close()
+        # driver.close()
 
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
         # todo saving after each loop not at the end
 
+    def add_records_to_file(self, record):
+        path = 'output/partial/'
+
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+        if len(self.years) == 1:
+            year = str(self.years[0])
+        else:
+            years = sorted(self.years)
+            year = f'{years[0]}-{years[-1]}'
+
+        file_name = f'{path}{self.keyword}__{year}__{self.start_time}.csv'
+        record.to_csv(file_name, mode='a', index=False, header=False, columns=record.columns)
+
     def scrap(self):
+        # Program start time
+
+        self.start_time = utils.get_current_time()
+
         # DataFrame to collect all corresponding authors
         self.authors_collection = utils.create_named_dataframe()
 
@@ -96,7 +117,7 @@ class ScienceDirectParser:
         self.create_parser_url()
 
         """
-        Beginning "Initialize driver"
+        Driver initialization and data parsing
         """
         driver = utils.initialize_driver(self.window)
 
@@ -115,7 +136,7 @@ class ScienceDirectParser:
         Writing to a file
         """
         self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
+        # self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
         self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
         self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
