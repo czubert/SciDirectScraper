@@ -84,11 +84,16 @@ _, _, _, btn_col2, _, _, _ = st.columns(7)
 with btn_col2:
     btn = st.button(label='Run parsing')
 
-parser = ScienceDirectParser(keyword=key_word,
-                             pub_per_page_multi25=pubs_per_page,
-                             requested_num_of_publ=num_of_articles,
-                             years=selected_year,
-                             window=window)
+# parser = ScienceDirectParser(keyword=key_word,
+#                              pub_per_page_multi25=pubs_per_page,
+#                              requested_num_of_publ=num_of_articles,
+#                              years=selected_year)
+
+# parser = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=105,
+#                              years=[x for x in range(2020, 2023)])
+
+parser = ScienceDirectParser(keyword='sers', pub_per_page_multi25=4, requested_num_of_publ=105,
+                             years=[x for x in range(2022, 2023)])
 
 if btn:
     start_time = time.time()

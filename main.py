@@ -48,9 +48,10 @@ class ScienceDirectParser:
         driver.get(self.parser_url)
         time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
-        wait = WebDriverWait(driver, 5)
+        wait = WebDriverWait(driver, 10)
 
-        pub_categories = pagination.check_if_more_pubs_than_limit(driver)
+        # todo to mozna zorbić tylko na wypadek jak ktoś poda, że chce 1000 i więcej lub wszystkie
+        pub_categories = pagination.check_if_more_pubs_than_limit(driver, self.requested_num_of_publ)
 
         try:
             show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
@@ -65,7 +66,7 @@ class ScienceDirectParser:
 
         pagination.paginate_through_cat(*pagination_args)
 
-    def parse_articles(self, driver):
+    def parse_articles(self, driver, btn_click_sleep):
         st.sidebar.subheader("Parsing authors data:")
         progress_bar = st.sidebar.progress(0)
 
@@ -80,7 +81,7 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article(driver, btn_click_sleep=0.15)
+            parsed_article.parse_article(driver, btn_click_sleep=btn_click_sleep)
             # self.add_records_to_collection(parsed_article.article_data_df)
             self.add_records_to_file(parsed_article.article_data_df)
 
@@ -126,25 +127,29 @@ class ScienceDirectParser:
         driver = utils.initialize_driver(self.window)
 
         # Opens search engine from initial URL. Parse all publications urls page by page
-        self.get_articles_urls(driver, open_browser_sleep=1.0, pagination_sleep=0.1)
+        self.get_articles_urls(driver, open_browser_sleep=1.5, pagination_sleep=0.2)
 
         # Takes opened driver and opens each publication in a new tab
-        self.parse_articles(driver)
+        self.parse_articles(driver, btn_click_sleep=0.25)
 
     def data_postprocessing(self):
         """
         Data Processing
         """
         self.authors_collection = data_processing.data_processing(pd.read_csv(self.file_name))
+        # todo wywalić to
         st.write('before sort')
         st.write(self.authors_collection)
+
         """
         Writing final version to a file
         """
         self.authors_collection = self.authors_collection.sort_values(by=['year', 'num_of_publications'],
                                                                       ascending=False)
+        # todo wywalić to
         st.write('after sort')
         st.write(self.authors_collection)
+
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
     def main(self):

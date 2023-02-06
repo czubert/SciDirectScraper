@@ -11,33 +11,39 @@ from selenium.webdriver.common.by import By
 import utils
 
 
-def check_if_more_pubs_than_limit(driver):
+def check_if_more_pubs_than_limit(driver, num_of_requested_pubs):
     """
     There is a limit of publications to parse per one link = 1000.
     This function returns categories of publications if the limit is exceeded.
     If it is not it returns publications per year
+    :param num_of_requested_pubs:
     :param driver: Selenium Webdriver
     :return: list
     """
+    # number of publications per year
     pub_numbs_per_year = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[1]/fieldset/ol")[0]
 
-    num_of_papers = 0
-    papers = pub_numbs_per_year.text.split()
-    for i in range(1, len(papers), 2):
-        try:
-            num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
-            if num_of_papers > 1000:
-                break
-        except ValueError:
-            continue
+    if num_of_requested_pubs > 1000:
+        num_of_papers = 0
+        papers = pub_numbs_per_year.text.split()
 
-    # If there is less than 1000 publications, then it is not looping through pub_categories.
-    if num_of_papers <= 1000:
-        pub_categories = pub_numbs_per_year
+        for i in range(1, len(papers), 2):
+            try:
+                num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
+                if num_of_papers > 1000:
+                    break
+            except ValueError:
+                continue
+
+        # If there is less than 1000 publications, then it is not looping through pub_categories.
+        if num_of_papers <= 1000:
+            pub_categories = pub_numbs_per_year
+        else:
+            pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
+
+        return pub_categories
     else:
-        pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
-
-    return pub_categories
+        return pub_numbs_per_year
 
 
 def paginate_through_cat(pub_categories, requested_num_of_publ, pub_per_page, articles_urls,
