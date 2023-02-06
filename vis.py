@@ -92,7 +92,7 @@ with btn_col2:
 # parser = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=105,
 #                              years=[x for x in range(2020, 2023)])
 
-parser = ScienceDirectParser(keyword='sers', pub_per_page_multi25=4, requested_num_of_publ=105,
+parser = ScienceDirectParser(keyword='sers', pub_per_page_multi25=4, requested_num_of_publ=120,
                              years=[x for x in range(2022, 2023)])
 
 if btn:

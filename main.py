@@ -21,7 +21,6 @@ class ScienceDirectParser:
         self.start_time = None
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
-        self.next_class_name = 'next'
         self.soup = None
         self.articles_urls = []
         self.window = window
@@ -50,21 +49,23 @@ class ScienceDirectParser:
 
         wait = WebDriverWait(driver, 10)
 
-        # todo to mozna zorbić tylko na wypadek jak ktoś poda, że chce 1000 i więcej lub wszystkie
-        pub_categories = pagination.check_if_more_pubs_than_limit(driver, self.requested_num_of_publ)
+        if self.requested_num_of_publ <= 1000:
+            pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
+                               driver, wait, pagination_sleep]
+            pagination.paginate(*pagination_args)
+        else:
+            pub_categories = pagination.check_if_more_pubs_than_limit(driver, self.requested_num_of_publ)
+            try:
+                show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
+                show_more_btn.click()
+            except IndexError as e:
+                print(f'Index error in get articles urls: {e}')
 
-        try:
-            show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
-            show_more_btn.click()
-        except IndexError as e:
-            print(f'Index error in get articles urls: {e}')
-
-        # Depending on if the number of available publications exceeds 1000,
-        # pagination goes through years/pub title categories
-        pagination_args = [pub_categories, self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
-                           self.next_class_name, driver, wait, pagination_sleep]
-
-        pagination.paginate_through_cat(*pagination_args)
+            # Depending on if the number of available publications exceeds 1000,
+            # pagination goes through years/pub title categories
+            pagination_args = [pub_categories, self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
+                               constants.NEXT_CLASS_NAME, driver, wait, pagination_sleep]
+            pagination.paginate_through_cat(*pagination_args)
 
     def parse_articles(self, driver, btn_click_sleep):
         st.sidebar.subheader("Parsing authors data:")

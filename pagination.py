@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import InvalidSessionIdException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
 
+import constants
 # Modules
 import utils
 
@@ -23,27 +24,25 @@ def check_if_more_pubs_than_limit(driver, num_of_requested_pubs):
     # number of publications per year
     pub_numbs_per_year = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[1]/fieldset/ol")[0]
 
-    if num_of_requested_pubs > 1000:
-        num_of_papers = 0
-        papers = pub_numbs_per_year.text.split()
+    num_of_papers = 0
+    papers = pub_numbs_per_year.text.split()
 
-        for i in range(1, len(papers), 2):
-            try:
-                num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
-                if num_of_papers > 1000:
-                    break
-            except ValueError:
-                continue
+    for i in range(1, len(papers), 2):
+        try:
+            num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
+            if num_of_papers > 1000:
+                break
+        except ValueError:
+            continue
 
         # If there is less than 1000 publications, then it is not looping through pub_categories.
         if num_of_papers <= 1000:
             pub_categories = pub_numbs_per_year
+
         else:
             pub_categories = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")[0]
 
         return pub_categories
-    else:
-        return pub_numbs_per_year
 
 
 def paginate_through_cat(pub_categories, requested_num_of_publ, pub_per_page, articles_urls,
@@ -67,16 +66,18 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, pub_per_page, ar
             pass
 
 
-def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name, driver, wait, tab=True):
+def paginate(requested_num_of_publ, pub_per_page, articles_urls, driver, wait, tab_opened=False):
+    next_btn = constants.NEXT_CLASS_NAME
+    progress_bar_limit = 10
+
     if requested_num_of_publ == 0:
         n_loops = -1
     else:
         n_loops = (requested_num_of_publ // pub_per_page) + 1
-
-    n = 10
+        progress_bar_limit = n_loops
     i = 0
 
-    progress = tqdm(desc='Pagination', total=n)
+    progress = tqdm(desc='Pagination', total=progress_bar_limit)
 
     while i != n_loops:
 
@@ -87,23 +88,23 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
         articles_urls += [item.get_attribute("href") for item in wait.until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
 
-        # Update output progressbar
-        progress.update(1)
+        # "next" button not available, there is less than 100 pubs for given parameters, so all fit in one page
+        if n_loops == 1:
+            return driver
 
         # Scrolls to the bottom to avoid 'feedback' pop-up
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        if not utils.does_element_exist(driver, tag=next_class_name) and tab is True:
-            return driver
 
-        elif utils.does_element_exist(driver, tag=next_class_name):
-            if tab:
-                # It is opening 'next button; in new tab instead of clicking it, so the pub categories do not hide
-                url = wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).get_attribute('href')
+        # Opens new tab. As "next" button available - there is more than 100 pubs for given params. And tab is closed
+        if utils.does_element_exist(driver, tag=next_btn):
+            if not tab_opened:
+                # Opening 'next button' in new tab instead of clicking it, so the pub categories do not hide
+                url = wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).get_attribute('href')
                 driver = utils.open_link_in_new_tab(driver, url)
-                tab = False
+                tab_opened = True
                 continue
-
-            wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_class_name))).click()
+            if n_loops != 1:
+                wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).click()
 
         else:
             try:
@@ -112,5 +113,8 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, next_class_name
                 pass
             finally:
                 return driver
+
+        # Update output progressbar
+        progress.update(1)
         i += 1
     progress.close()
