@@ -7,6 +7,7 @@ from io import BytesIO
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.edge.service import Service
 
 # Modules
 import constants
@@ -27,49 +28,32 @@ def get_current_time():
     return f'{now.year}_{now.month}_{now.day}-{now.hour}h_{now.minute}min'
 
 
-def write_data_coll_to_file(df: pd.DataFrame, file_name: str):
-    path = 'output'
-    if not os.path.isdir(path):
-        os.mkdir(path)
+def write_data_to_file(df: pd.DataFrame, file_name: str):
+    df.to_excel(f'{file_name[:-4]}.xlsx')
+    df.to_csv(f'{file_name[:-4]}.csv', encoding='utf-16')
 
-    df.to_excel(f'{path}/{file_name}.xlsx')
-    df.to_csv(f'{path}/{file_name}.csv', encoding='utf-16')
-
-
-def write_xls_csv_to_buffers(df: pd.DataFrame):
-    return write_xlsx_to_buffer(df), write_csv_to_buffer(df)
-
-
-def write_xlsx_to_buffer(df: pd.DataFrame):
-    buffer = BytesIO()
-
-    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-        df.to_excel(writer)
-
-        writer.save()
-        writer.close()
-
-    return buffer
-
-
-def write_csv_to_buffer(df: pd.DataFrame):
-    buffer = BytesIO()
-    df.to_csv(buffer)
-
-    return buffer
-
-
-def build_filename(keyword, years, articles_urls, authors_collection):
-    if len(years) == 1:
-        year = str(years[0])
-    else:
-        years = sorted(years)
-        year = f'{years[0]}-{years[-1]}'
-
-    authors_num = len(authors_collection.index)
-    pub_num = len(articles_urls)
-
-    return f'key-{keyword}_years-{year}_auth-num-{authors_num}_publ-num-{pub_num}'
+#
+# def write_xls_csv_to_buffers(df: pd.DataFrame):
+#     return write_xlsx_to_buffer(df), write_csv_to_buffer(df)
+#
+#
+# def write_xlsx_to_buffer(df: pd.DataFrame):
+#     buffer = BytesIO()
+#
+#     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+#         df.to_excel(writer)
+#
+#         writer.save()
+#         writer.close()
+#
+#     return buffer
+#
+#
+# def write_csv_to_buffer(df: pd.DataFrame):
+#     buffer = BytesIO()
+#     df.to_csv(buffer)
+#
+#     return buffer
 
 
 def create_named_dataframe():
@@ -81,6 +65,7 @@ def create_named_dataframe():
 
 def initialize_driver(window):
     options = webdriver.ChromeOptions()
+
     # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -88,7 +73,6 @@ def initialize_driver(window):
 
     # Initialising Driver with preset options
     # driver = webdriver.Chrome(service=ChromeService('chromedriver'), options=options)
-    from selenium.webdriver.edge.service import Service
     service = Service(verbose=True)
     driver = webdriver.Edge(service=service)
     time.sleep(0.1)
@@ -121,27 +105,6 @@ def close_link_tab(driver):
     return driver
 
 
-def data_processing(df: pd.DataFrame):
-    """
-    Getting rid of repetitions and group by email
-    :param df: pd.DataFrame
-    :return: pd.DataFrame
-    """
-    df.drop_duplicates(inplace=True)
-
-    # Groups authors by eamil
-    df = group_by_email(df)
-
-    # Returns num of a list in each row
-    df['num_of_publications'] = [len(x) for x in df['publ_title']]
-
-    # Getting only the first publication from all (and their details: year and affiliation)
-    df = df.applymap(return_first_el)
-
-    # Removing records of the same author with different email
-    df = df.drop_duplicates(['name', 'surname'], keep='first')
-
-    return df
 
 
 def return_first_el(x):

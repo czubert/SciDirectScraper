@@ -1,4 +1,3 @@
-import datetime
 import os
 import time
 
@@ -8,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
+import constants
+import data_processing
 import pagination
 import utils
 from article import Article
@@ -42,10 +43,10 @@ class ScienceDirectParser:
         offset = 0
         self.parser_url = f'{self.core_url}{self.keyword}&years={url_years}&show={self.pub_per_page}&offset={offset}'
 
-    def get_articles_urls(self, driver, pagination_sleep):
+    def get_articles_urls(self, driver, open_browser_sleep, pagination_sleep):
         st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
-        time.sleep(pagination_sleep)  # sleep so the browser has time to open
+        time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
         wait = WebDriverWait(driver, 5)
 
@@ -80,15 +81,14 @@ class ScienceDirectParser:
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
             parsed_article.parse_article(driver, btn_click_sleep=0.01)
-            self.add_records_to_collection(parsed_article.article_data_df)
+            # self.add_records_to_collection(parsed_article.article_data_df)
             self.add_records_to_file(parsed_article.article_data_df)
+
             # Information about the progress
             progress_bar.progress((i + 1) / self.requested_num_of_publ)
-        # driver.close()
 
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
-        # todo saving after each loop not at the end
 
     def add_records_to_file(self, record):
         path = 'output/partial/'
@@ -102,8 +102,12 @@ class ScienceDirectParser:
             years = sorted(self.years)
             year = f'{years[0]}-{years[-1]}'
 
-        file_name = f'{path}{self.keyword}__{year}__{self.start_time}.csv'
-        record.to_csv(file_name, mode='a', index=False, header=False, columns=record.columns)
+        self.file_name = f'{path}{self.keyword}__{year}__{self.start_time}.csv'
+
+        if not os.path.isfile(self.file_name):
+            record.to_csv(self.file_name, mode='a', index='email', header=constants.COLUMNS)
+        else:
+            record.to_csv(self.file_name, mode='a', index='email', header=False)
 
     def scrap(self):
         # Program start time
@@ -122,7 +126,7 @@ class ScienceDirectParser:
         driver = utils.initialize_driver(self.window)
 
         # Opens search engine from initial URL. Parse all publications urls page by page
-        self.get_articles_urls(driver, pagination_sleep=0.7)
+        self.get_articles_urls(driver, open_browser_sleep=1.0, pagination_sleep=0.4)
 
         # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
@@ -130,19 +134,22 @@ class ScienceDirectParser:
         """
         Data Processing         
         """
-        utils.data_processing(self.authors_collection)
+        self.authors_collection = data_processing.data_processing(pd.read_csv(self.file_name))
 
         """
-        Writing to a file
+        Writing final version to a file
         """
-        self.file_name = utils.build_filename(self.keyword, self.years, self.articles_urls, self.authors_collection)
-        # self.authors_collection = self.authors_collection.sort_values(by=['year'], ascending=False)
-        self.csv_file = utils.write_data_coll_to_file(self.authors_collection, self.file_name)
-        self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
+        self.authors_collection = self.authors_collection.sort_values(by=['year', 'num_of_publications'],
+                                                                      ascending=False)
+
+        self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
+
+        # todo delete after deleting download button from streamlit
+        # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=15,
+    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=5,
                                   years=[x for x in range(2010, 2023)])
 
     science.scrap()
