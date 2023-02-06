@@ -93,7 +93,7 @@ if btn:
     start_time = time.time()
     try:
         with st.spinner('Wait while program is extracting publications urls...'):
-            parser.scrap()
+            parser.main()
             st.sidebar.success(f'Total: {len(parser.articles_urls)} addresses extracted')
     except Exception as e:
         st.error(f'Something went wrong. Exception:{e}')

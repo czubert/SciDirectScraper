@@ -131,8 +131,9 @@ class ScienceDirectParser:
         # Takes opened driver and opens each publication in a new tab
         self.parse_articles(driver)
 
+    def data_postprocessing(self):
         """
-        Data Processing         
+        Data Processing
         """
         self.authors_collection = data_processing.data_processing(pd.read_csv(self.file_name))
 
@@ -147,9 +148,17 @@ class ScienceDirectParser:
         # todo delete after deleting download button from streamlit
         # self.coll_xlsx_buff, self.coll_csv_buff = utils.write_xls_csv_to_buffers(self.authors_collection)
 
+    def main(self):
+        try:
+            self.scrap()
+        except Exception as e:
+            print(f'Exception in main(): {e}')
+        finally:
+            self.data_postprocessing()
+
 
 if __name__ == '__main__':
     science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=5,
                                   years=[x for x in range(2010, 2023)])
 
-    science.scrap()
+    science.main()
