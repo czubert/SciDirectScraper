@@ -8,6 +8,7 @@ st.set_page_config(layout="wide",
                    page_title='ScienceDirectScrapper',
                    initial_sidebar_state='expanded'
                    )
+
 # Changing the width of the sidebar
 st.markdown(
     """
@@ -23,17 +24,29 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 st.sidebar.title("Log:")
 
 # STYLE
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;}</style>', unsafe_allow_html=True)
 st.subheader('SciDirectScraper')
-setup = st.expander("Setup")
 
-with setup:
+# # # Select Browser # # #
+browser = {1: 'Chrome', 2: 'EDGE', 3: 'Firefox'}
+pubs_per_page = st.radio('Select browser for parsing:', [1, 2, 3], index=0,
+                         format_func=lambda x: browser.get(x),
+                         help='This browser must be installed on your PC')
+
+st.markdown("""<hr style="height:1px;border:none;background-color:#ddd; margin:1px" /> """,
+            unsafe_allow_html=True)
+
+with st.expander("Setup popup window"):
     window = st.radio('Window opening properties', ['Standard', 'Maximized', 'Hidden'])
 
-col1, col2, col3 = st.columns(3)
+st.markdown("""<hr style="height:1px;border:none;background-color:#ddd; margin:1px" /> """,
+            unsafe_allow_html=True)
+
+col1, col2 = st.columns(2)
 with col1:
     key_word = st.text_input(label='Search for:', placeholder='type your keyword here', value='sers',
                              help='Type a keyword you are looking for.')
@@ -46,12 +59,6 @@ with col2:
                                                'then program will go through pages to achieve '
                                                'requested number of articles, '
                                                'choose how many of them would you like to scrap'))
-with col3:
-    # # # Select Browser # # #
-    browser = {1: 'Chrome', 2: 'EDGE', 3: 'Firefox'}
-    pubs_per_page = st.radio('Select browser for parsing:', [1, 2, 3], index=0,
-                             format_func=lambda x: browser.get(x),
-                             help='This browser must be installed on your PC')
 
 st.markdown("""<hr style="height:1px;border:none;background-color:#ddd; margin:1px" /> """,
             unsafe_allow_html=True)
@@ -136,4 +143,7 @@ if btn:
         with st.expander('Show data'):
             st.write(parser.authors_collection)  # Show results as DataFrame
 
-st.balloons()
+balloons = False
+if not balloons:
+    st.balloons()
+    balloons = True
