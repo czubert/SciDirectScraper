@@ -1,2 +1,1 @@
-from . import article
-from . import author
+from tools import author

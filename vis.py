@@ -31,9 +31,8 @@ st.subheader('SciDirectScraper')
 setup = st.expander("Setup")
 
 with setup:
-    window = st.radio('Windows opening properties', ['Standard', 'Maximized', 'Hidden'])
+    window = st.radio('Window opening properties', ['Standard', 'Maximized', 'Hidden'])
 
-st.warning('The only requirement to run this app is to have installed Google Chrome on your computer')
 col1, col2, col3 = st.columns(3)
 with col1:
     key_word = st.text_input(label='Search for:', placeholder='type your keyword here', value='sers',
@@ -48,12 +47,11 @@ with col2:
                                                'requested number of articles, '
                                                'choose how many of them would you like to scrap'))
 with col3:
-    # # # ARTICLES PER PAGE # # #
-    pubs = {1: 25, 2: 50, 3: 75, 4: 100}
-    pubs_per_page = st.radio('How many articles per page would you like to parse:', [1, 2, 3, 4], index=3,
-                             format_func=lambda x: pubs.get(x),
-                             help='This parameter choose how many publications per one page should be visible,'
-                                  'the more the faster it will go, as each page must be opened before parsing')
+    # # # Select Browser # # #
+    browser = {1: 'Chrome', 2: 'EDGE', 3: 'Firefox'}
+    pubs_per_page = st.radio('Select browser for parsing:', [1, 2, 3], index=0,
+                             format_func=lambda x: browser.get(x),
+                             help='This browser must be installed on your PC')
 
 st.markdown("""<hr style="height:1px;border:none;background-color:#ddd; margin:1px" /> """,
             unsafe_allow_html=True)
@@ -85,7 +83,6 @@ with btn_col2:
     btn = st.button(label='Run parsing')
 
 parser = ScienceDirectParser(keyword=key_word,
-                             pub_per_page_multi25=pubs_per_page,
                              requested_num_of_publ=num_of_articles,
                              years=selected_year,
                              window=window)
@@ -139,4 +136,4 @@ if btn:
         with st.expander('Show data'):
             st.write(parser.authors_collection)  # Show results as DataFrame
 
-    st.balloons()
+st.balloons()

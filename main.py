@@ -7,15 +7,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
 import constants
-import data_processing
-import driver
-import pagination
 import utils
-from article import Article
+from tools import pagination, driver, data_processing
+from tools.article import Article
 
 
 class ScienceDirectParser:
-    def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
+    def __init__(self, window='maximized', keyword='SERS', requested_num_of_publ=2,
                  years=tuple([2022])):
         # Parsing
         self.driver = None
@@ -27,7 +25,7 @@ class ScienceDirectParser:
         self.window = window
         # searching parameters
         self.keyword = keyword
-        self.pub_per_page = 25 * pub_per_page_multi25
+        self.pub_per_page = 25
         self.requested_num_of_publ = requested_num_of_publ
         self.years = years
         # Saving
@@ -43,28 +41,27 @@ class ScienceDirectParser:
         offset = 0
         self.parser_url = f'{self.core_url}{self.keyword}&years={url_years}&show={self.pub_per_page}&offset={offset}'
 
-    def get_articles_urls(self, driver, open_browser_sleep, pagination_sleep):
-        driver.get(self.parser_url)
+    def get_articles_urls(self, drver, open_browser_sleep, pagination_sleep):
+        self.driver.get(self.parser_url)
         time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(self.driver, 6)
 
         if self.requested_num_of_publ <= 1000:
             pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
-                               driver, wait, pagination_sleep]
+                               self.driver, wait, pagination_sleep]
             pagination.paginate(*pagination_args)
         else:
-            pub_categories = pagination.check_if_more_pubs_than_limit(driver, self.requested_num_of_publ)
+            pub_categories = pagination.check_if_more_pubs_than_limit(self.driver, self.requested_num_of_publ)
             try:
                 show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
                 show_more_btn.click()
             except IndexError as e:
                 print(f'Index error in get articles urls: {e}')
 
-            # Depending on if the number of available publications exceeds 1000,
-            # pagination goes through years/pub title categories
+            # If the number of available publications > 1000, pagination goes through pub title categories
             pagination_args = [pub_categories, self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
-                               constants.NEXT_CLASS_NAME, driver, wait, pagination_sleep]
+                               constants.NEXT_CLASS_NAME, self.driver, wait, pagination_sleep]
             pagination.paginate_through_cat(*pagination_args)
 
     def parse_articles(self, driver, btn_click_sleep, pbar=None):
