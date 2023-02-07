@@ -8,7 +8,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
 import utils
-from author import Author
+from tools.author import Author
 
 
 class Article:

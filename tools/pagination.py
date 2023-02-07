@@ -81,6 +81,9 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, driver, wait, t
 
     while i != n_loops:
 
+        # Update output progressbar
+        progress.update(1)
+
         # Short break so the server do not block script
         time.sleep(0.7)  # important: lower values result in error
 
@@ -114,7 +117,5 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, driver, wait, t
             finally:
                 return driver
 
-        # Update output progressbar
-        progress.update(1)
         i += 1
     progress.close()

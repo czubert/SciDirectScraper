@@ -13,6 +13,7 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.firefox.service import Service as FirefoxService
 
+
 # Chrome
 def chrome_options():
     return webdriver.ChromeOptions()
@@ -40,11 +41,7 @@ def initialize_driver(window):
     # options = edge_options()
 
     # # to supress the error messages/logs
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', True)
-    options.add_argument('--disable-gpu')
-    options.add_argument('--disable-dev-shm-usage')
+    options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
 
     driver = chrome_init(options)
     # driver = edge_init(options)
