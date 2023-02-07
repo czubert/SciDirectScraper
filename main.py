@@ -152,7 +152,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=5,
+    science = ScienceDirectParser(keyword='y. sheena mary', requested_num_of_publ=5,
                                   years=[x for x in range(2020, 2023)])
 
     science.scrap()
