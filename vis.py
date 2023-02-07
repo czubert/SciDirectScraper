@@ -84,34 +84,58 @@ _, _, _, btn_col2, _, _, _ = st.columns(7)
 with btn_col2:
     btn = st.button(label='Run parsing')
 
-# parser = ScienceDirectParser(keyword=key_word,
-#                              pub_per_page_multi25=pubs_per_page,
-#                              requested_num_of_publ=num_of_articles,
-#                              years=selected_year)
-
-# parser = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=105,
-#                              years=[x for x in range(2020, 2023)])
-
-parser = ScienceDirectParser(keyword='sers', pub_per_page_multi25=4, requested_num_of_publ=120,
-                             years=[x for x in range(2022, 2023)])
+parser = ScienceDirectParser(keyword=key_word,
+                             pub_per_page_multi25=pubs_per_page,
+                             requested_num_of_publ=num_of_articles,
+                             years=selected_year,
+                             window=window)
 
 if btn:
     start_time = time.time()
-    try:
-        with st.spinner('Wait while program is collecting authors...'):
-            parser.main()
-            duration = vis_helper.get_duration(start_time)
-            st.sidebar.success(f'Summary:'
-                               f'\n* {len(parser.articles_urls)} urls extracted!'
-                               f'\n* Authors collected: {parser.authors_collection.shape[0]}'
-                               f'\n* Duration: {duration}')
-            st.success('Articles parsed successfully! Saved in the "output" folder in app directory.'
-                       'Below find preview:')
 
-    except Exception as e:
-        st.error(f'Something went wrong. Exception:{e}')
+    with st.spinner('Wait while program is collecting authors...'):
+        ###
+        # ====> Parser Initialization <====
+        ###
 
-    with st.spinner('Program is preparing DataFrame'):
+        # Creates named DataFrame for data storage, creates parser URL, initialize WebDriver
+        st.sidebar.write('Parser initialization...')
+        parser.parser_initialization()
+
+        ###
+        # ====> Getting articles URLs <====
+        ###
+
+        st.sidebar.write('Getting articles URLs...')
+        # Opens search engine from initial URL. Parse all publications urls page by page
+        parser.get_articles_urls(parser.driver, open_browser_sleep=1.5, pagination_sleep=0.2)
+
+        ###
+        # ====> Collecting authors data - parsing <====
+        ###
+
+        st.sidebar.write('Collecting  authors data...')
+        # initializing progressbar for authors collection
+        progress_bar = st.sidebar.progress(0)
+        # Takes opened driver and opens each publication in a new tab
+        parser.parse_articles(parser.driver, btn_click_sleep=0.25, pbar=progress_bar)
+        # Showing progressbar
+        try:
+            st.sidebar.write(progress_bar)
+        except st.StreamlitAPIException:
+            pass
+
+        ###
+        # ====> Postprocessing data <====
+        ###
+
+        # Takes opened driver and opens each publication in a new tab
+        st.sidebar.write('Postprocessing the data...')
+        parser.data_postprocessing()
+
+    vis_helper.success_msg(parser, start_time)
+
+    with st.spinner('Program is preparing a DataFrame preview'):
         with st.expander('Show data'):
             st.write(parser.authors_collection)  # Show results as DataFrame
 

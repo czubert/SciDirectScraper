@@ -85,25 +85,25 @@ class Article:
             self.article_data_df = self.article_data_df.append(df)
 
     @staticmethod
-    def click_author_buttons(driver, auth, sleep):
+    def click_author_buttons(driver, auth):
         actions = ActionChains(driver)
         actions.click(auth)
         try:
             actions.perform()
         except ElementNotInteractableException as e:
             print(f'clicking authors button failed:{e}')
-        time.sleep(sleep)
 
-    def parse_article(self, driver, btn_click_sleep):
+    def parse_article(self, driver, sleep):
         try:
             driver = utils.open_link_in_new_tab(driver, self.url)
             button = driver.find_elements(By.XPATH, '//div[@class="author-group"]/button')
             for corr_author in button:  # Goes through all the authors )
-                Article.click_author_buttons(driver, corr_author, btn_click_sleep)
+                Article.click_author_buttons(driver, corr_author)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
                     self.get_article_meta(soup)
                     self.get_author_meta(data)
+                time.sleep(sleep)
             utils.close_link_tab(driver)
             self.add_records_to_df()
         except NoSuchElementException:
@@ -113,4 +113,4 @@ class Article:
 if __name__ == '__main__':
     url = 'https://www.sciencedirect.com/science/article/pii/S000326701931462X'
     art = Article(url)
-    art.parse_article(btn_click_sleep=0.1)
+    art.parse_article(sleep=0.1)

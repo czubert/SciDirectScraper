@@ -2,13 +2,13 @@ import os
 import time
 
 import pandas as pd
-import streamlit as st
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
 import constants
 import data_processing
+import driver
 import pagination
 import utils
 from article import Article
@@ -18,6 +18,7 @@ class ScienceDirectParser:
     def __init__(self, window='maximized', keyword='SERS', pub_per_page_multi25=1, requested_num_of_publ=2,
                  years=tuple([2022])):
         # Parsing
+        self.driver = None
         self.start_time = None
         self.parser_url = ''
         self.core_url = 'https://www.sciencedirect.com/search?qs='
@@ -43,7 +44,6 @@ class ScienceDirectParser:
         self.parser_url = f'{self.core_url}{self.keyword}&years={url_years}&show={self.pub_per_page}&offset={offset}'
 
     def get_articles_urls(self, driver, open_browser_sleep, pagination_sleep):
-        st.sidebar.subheader("Extracting urls:")
         driver.get(self.parser_url)
         time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
@@ -67,10 +67,7 @@ class ScienceDirectParser:
                                constants.NEXT_CLASS_NAME, driver, wait, pagination_sleep]
             pagination.paginate_through_cat(*pagination_args)
 
-    def parse_articles(self, driver, btn_click_sleep):
-        st.sidebar.subheader("Parsing authors data:")
-        progress_bar = st.sidebar.progress(0)
-
+    def parse_articles(self, driver, btn_click_sleep, pbar=None):
         """
         If requested number of publications is 0 - all, 
         then we change the overall number of requested publications,
@@ -82,12 +79,15 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article(driver, btn_click_sleep=btn_click_sleep)
+            parsed_article.parse_article(driver, sleep=btn_click_sleep)
             # self.add_records_to_collection(parsed_article.article_data_df)
             self.add_records_to_file(parsed_article.article_data_df)
 
-            # Information about the progress
-            progress_bar.progress((i + 1) / self.requested_num_of_publ)
+            # Information about the progress (from streamlit)
+            if pbar is not None:
+                pbar.progress((i + 1) / self.requested_num_of_publ)
+
+        driver.close()
 
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
@@ -111,7 +111,7 @@ class ScienceDirectParser:
         else:
             record.to_csv(self.file_name, mode='a', header=False)
 
-    def scrap(self):
+    def parser_initialization(self):
         # Program start time
 
         self.start_time = utils.get_current_time()
@@ -122,40 +122,32 @@ class ScienceDirectParser:
         # Creates an initial URL for parsing
         self.create_parser_url()
 
-        """
-        Driver initialization and data parsing
-        """
-        driver = utils.initialize_driver(self.window)
-
-        # Opens search engine from initial URL. Parse all publications urls page by page
-        self.get_articles_urls(driver, open_browser_sleep=1.5, pagination_sleep=0.2)
-
-        # Takes opened driver and opens each publication in a new tab
-        self.parse_articles(driver, btn_click_sleep=0.25)
+        # Driver initialization
+        self.driver = driver.initialize_driver(self.window)
 
     def data_postprocessing(self):
         """
         Data Processing
         """
         self.authors_collection = data_processing.data_processing(pd.read_csv(self.file_name))
-        # todo wywalić to
-        st.write('before sort')
-        st.write(self.authors_collection)
 
         """
         Writing final version to a file
         """
         self.authors_collection = self.authors_collection.sort_values(by=['year', 'num_of_publications'],
                                                                       ascending=False)
-        # todo wywalić to
-        st.write('after sort')
-        st.write(self.authors_collection)
 
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
-    def main(self):
+    def scrap(self):
         try:
-            self.scrap()
+            self.parser_initialization()
+            # Opens search engine from initial URL. Parse all publications urls page by page
+            self.get_articles_urls(self.driver, open_browser_sleep=1.0, pagination_sleep=0.1)
+
+            # Takes opened driver and opens each publication in a new tab
+            self.parse_articles(self.driver, btn_click_sleep=0.15)
+
         except Exception as e:
             print(f'Exception in main(): {e}')
         finally:
@@ -166,4 +158,4 @@ if __name__ == '__main__':
     science = ScienceDirectParser(keyword='y. sheena mary', pub_per_page_multi25=4, requested_num_of_publ=5,
                                   years=[x for x in range(2020, 2023)])
 
-    science.main()
+    science.scrap()

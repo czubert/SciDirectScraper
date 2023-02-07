@@ -1,25 +1,10 @@
 import datetime
-import os
-import time
 import pandas as pd
-from io import BytesIO
-# Selenium
-from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.service import Service
 
 # Modules
 import constants
-
-
-def does_element_exist(driver, tag):
-    try:
-        element_exist = driver.find_element(By.LINK_TEXT, tag)  # .is_displayed()
-    except NoSuchElementException:
-        element_exist = False
-
-    return element_exist
 
 
 def get_current_time():
@@ -32,29 +17,6 @@ def write_data_to_file(df: pd.DataFrame, file_name: str):
     df.to_excel(f'{file_name[:-4]}.xlsx')
     df.to_csv(f'{file_name[:-4]}.csv', encoding='utf-16')
 
-#
-# def write_xls_csv_to_buffers(df: pd.DataFrame):
-#     return write_xlsx_to_buffer(df), write_csv_to_buffer(df)
-#
-#
-# def write_xlsx_to_buffer(df: pd.DataFrame):
-#     buffer = BytesIO()
-#
-#     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-#         df.to_excel(writer)
-#
-#         writer.save()
-#         writer.close()
-#
-#     return buffer
-#
-#
-# def write_csv_to_buffer(df: pd.DataFrame):
-#     buffer = BytesIO()
-#     df.to_csv(buffer)
-#
-#     return buffer
-
 
 def create_named_dataframe():
     columns = constants.COLUMNS
@@ -63,25 +25,13 @@ def create_named_dataframe():
     return df
 
 
-def initialize_driver(window):
-    options = webdriver.ChromeOptions()
+def does_element_exist(driver, tag):
+    try:
+        element_exist = driver.find_element(By.LINK_TEXT, tag)  # .is_displayed()
+    except NoSuchElementException:
+        element_exist = False
 
-    # # to supress the error messages/logs
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', True)
-
-    # Initialising Driver with preset options
-    # driver = webdriver.Chrome(service=ChromeService('chromedriver'), options=options)
-    service = Service(verbose=True)
-    driver = webdriver.Edge(service=service)
-    time.sleep(0.1)
-    if window == 'Maximized':
-        driver.maximize_window()
-    elif window == 'Hidden':
-        driver.set_window_position(-2000, 0)
-
-    return driver
+    return element_exist
 
 
 def open_link_in_new_tab(driver, url):
@@ -91,7 +41,6 @@ def open_link_in_new_tab(driver, url):
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])
     driver.get(url)
-    time.sleep(0.1)
 
     return driver
 
@@ -103,8 +52,6 @@ def close_link_tab(driver):
     # Switching to old tab
     driver.switch_to.window(driver.window_handles[0])
     return driver
-
-
 
 
 def return_first_el(x):
