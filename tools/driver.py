@@ -25,7 +25,7 @@ def chrome_options():
 
 @st.experimental_singleton
 def chrome_init(_options):
-    return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=_options)
 
 
 # EDGE
