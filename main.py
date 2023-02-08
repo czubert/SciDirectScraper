@@ -45,7 +45,7 @@ class ScienceDirectParser:
         self.driver.get(self.parser_url)
         time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
-        wait = WebDriverWait(self.driver, 6)
+        wait = WebDriverWait(self.driver, 15)
 
         if self.requested_num_of_publ <= 1000:
             pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
