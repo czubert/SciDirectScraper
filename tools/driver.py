@@ -23,10 +23,13 @@ def chrome_options():
 
 def chrome_init(options):
     try:
-        driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+        service = ChromeService(ChromeDriverManager().install())
+        # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+        driver = webdriver.Chrome(options=options, service=service)
     except Exception as e:
         driver = webdriver.Chrome(options=options, service=ChromeService())
         print(e)
+    # driver = webdriver.Chrome(options=options, service=ChromeService())
     return driver
 
 
@@ -49,7 +52,9 @@ def initialize_driver(window):
 
     # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
-
+    options.add_argument('--headless')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--log-level=3')
     driver = chrome_init(options)
     # driver = edge_init(options)
     # driver = firefox_init()
