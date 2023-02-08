@@ -24,9 +24,9 @@ def chrome_options():
 def chrome_init(options):
     try:
         driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-    except WebDriverException:
+    except Exception as e:
         driver = webdriver.Chrome(options=options, service=ChromeService())
-
+        print(e)
     return driver
 
 
