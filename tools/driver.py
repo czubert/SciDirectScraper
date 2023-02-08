@@ -1,5 +1,7 @@
 # Selenium
+import selenium
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
 # for chrome
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -20,7 +22,12 @@ def chrome_options():
 
 
 def chrome_init(options):
-    return webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+    try:
+        driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+    except WebDriverException:
+        driver = webdriver.Chrome(options=options, service=ChromeService())
+
+    return driver
 
 
 # EDGE
