@@ -1,3 +1,5 @@
+import streamlit as st
+
 # Selenium
 import selenium
 from selenium import webdriver
