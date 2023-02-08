@@ -21,16 +21,9 @@ def chrome_options():
     return webdriver.ChromeOptions()
 
 
+@st.experimental_singleton
 def chrome_init(options):
-    try:
-        service = ChromeService(ChromeDriverManager().install())
-        # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-        driver = webdriver.Chrome(options=options, service=service)
-    except Exception as e:
-        driver = webdriver.Chrome(options=options, service=ChromeService())
-        print(e)
-    # driver = webdriver.Chrome(options=options, service=ChromeService())
-    return driver
+    return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
 
 
 # EDGE
