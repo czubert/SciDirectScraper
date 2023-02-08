@@ -1,3 +1,2 @@
 firefox-esr
 chromium
-chromium-chromedriver
