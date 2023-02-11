@@ -1,5 +1,6 @@
 import time
 import streamlit as st
+from streamlit.errors import StreamlitAPIException
 
 import vis_helper
 from main import ScienceDirectParser
@@ -112,7 +113,7 @@ if btn:
 
         st.sidebar.write('Getting articles URLs...')
         # Opens search engine from initial URL. Parse all publications urls page by page
-        parser.get_articles_urls(parser.driver, open_browser_sleep=1.5, pagination_sleep=0.2)
+        parser.get_articles_urls(open_browser_sleep=0.5, pagination_sleep=1.7)
 
         ###
         # ====> Collecting authors data - parsing <====
@@ -122,11 +123,11 @@ if btn:
         # initializing progressbar for authors collection
         progress_bar = st.sidebar.progress(0)
         # Takes opened driver and opens each publication in a new tab
-        parser.parse_articles(parser.driver, btn_click_sleep=0.25, pbar=progress_bar)
+        parser.parse_articles(btn_click_sleep=0.25, pbar=progress_bar)
         # Showing progressbar
         try:
             st.sidebar.write(progress_bar)
-        except st.StreamlitAPIException:
+        except StreamlitAPIException:
             pass
 
         ###
@@ -143,7 +144,7 @@ if btn:
         with st.expander('Show data'):
             st.write(parser.authors_collection)  # Show results as DataFrame
 
-balloons = False
-if not balloons:
-    st.balloons()
-    balloons = True
+# balloons = False
+# if not balloons:
+#     st.balloons()
+#     balloons = True

@@ -25,7 +25,7 @@ class ScienceDirectParser:
         self.window = window
         # searching parameters
         self.keyword = keyword
-        self.pub_per_page = 25
+        self.pub_per_page = 100
         self.requested_num_of_publ = requested_num_of_publ
         self.years = years
         # Saving
@@ -41,13 +41,13 @@ class ScienceDirectParser:
         offset = 0
         self.parser_url = f'{self.core_url}{self.keyword}&years={url_years}&show={self.pub_per_page}&offset={offset}'
 
-    def get_articles_urls(self, drver, open_browser_sleep, pagination_sleep):
-        self.driver.get(self.parser_url)
+    def get_articles_urls(self, open_browser_sleep, pagination_sleep):
+        self.driver.get(self.parser_url)  # invoking driver - opening website
         time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
-        wait = WebDriverWait(self.driver, 15)
+        wait = WebDriverWait(self.driver, 10)
 
-        if self.requested_num_of_publ <= 1000:
+        if 0 < self.requested_num_of_publ <= 1000:
             pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
                                self.driver, wait, pagination_sleep]
             pagination.paginate(*pagination_args)
@@ -61,10 +61,10 @@ class ScienceDirectParser:
 
             # If the number of available publications > 1000, pagination goes through pub title categories
             pagination_args = [pub_categories, self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
-                               constants.NEXT_CLASS_NAME, self.driver, wait, pagination_sleep]
+                               self.driver, wait, pagination_sleep]
             pagination.paginate_through_cat(*pagination_args)
 
-    def parse_articles(self, driver, btn_click_sleep, pbar=None):
+    def parse_articles(self, btn_click_sleep, pbar=None):
         """
         If requested number of publications is 0 - all, 
         then we change the overall number of requested publications,
@@ -76,7 +76,7 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
             parsed_article = Article(pub_url)
-            parsed_article.parse_article(driver, sleep=btn_click_sleep)
+            parsed_article.parse_article(self.driver, sleep=btn_click_sleep)
             # self.add_records_to_collection(parsed_article.article_data_df)
             self.add_records_to_file(parsed_article.article_data_df)
 
@@ -84,7 +84,7 @@ class ScienceDirectParser:
             if pbar is not None:
                 pbar.progress((i + 1) / self.requested_num_of_publ)
 
-        driver.close()
+        self.driver.close()
 
     def add_records_to_collection(self, record):
         self.authors_collection = pd.concat((self.authors_collection, record))
@@ -140,10 +140,10 @@ class ScienceDirectParser:
         try:
             self.parser_initialization()
             # Opens search engine from initial URL. Parse all publications urls page by page
-            self.get_articles_urls(self.driver, open_browser_sleep=1.0, pagination_sleep=0.1)
+            self.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=0.4)
 
             # Takes opened driver and opens each publication in a new tab
-            self.parse_articles(self.driver, btn_click_sleep=0.15)
+            self.parse_articles(self.driver, btn_click_sleep=0.25)
 
         except Exception as e:
             print(f'Exception in main(): {e}')
@@ -152,7 +152,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='y. sheena mary', requested_num_of_publ=5,
+    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=25,
                                   years=[x for x in range(2020, 2023)])
 
     science.scrap()

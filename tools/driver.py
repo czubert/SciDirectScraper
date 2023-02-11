@@ -1,9 +1,6 @@
-import streamlit as st
-
 # Selenium
 import selenium
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
 
 # for chrome
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -23,7 +20,6 @@ def chrome_options():
     return webdriver.ChromeOptions()
 
 
-@st.experimental_singleton
 def chrome_init(_options):
     return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=_options)
 
@@ -47,7 +43,6 @@ def initialize_driver(window):
 
     # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
-    options.add_argument('--headless')
     options.add_argument('--disable-gpu')
     options.add_argument('--log-level=3')
     driver = chrome_init(options)

@@ -24,19 +24,19 @@ def check_if_more_pubs_than_limit(driver, num_of_requested_pubs):
     # number of publications per year
     pub_numbs_per_year = driver.find_elements(By.XPATH, "(//div[@class='FacetItem'])[1]/fieldset/ol")[0]
 
-    num_of_papers = 0
+    max_num_of_papers = 0
     papers = pub_numbs_per_year.text.split()
 
     for i in range(1, len(papers), 2):
         try:
-            num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
-            if num_of_papers > 1000:
+            max_num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
+            if max_num_of_papers > 1000:
                 break
         except ValueError:
             continue
 
         # If there is less than 1000 publications, then it is not looping through pub_categories.
-        if num_of_papers <= 1000:
+        if max_num_of_papers <= 1000:
             pub_categories = pub_numbs_per_year
 
         else:
@@ -46,7 +46,7 @@ def check_if_more_pubs_than_limit(driver, num_of_requested_pubs):
 
 
 def paginate_through_cat(pub_categories, requested_num_of_publ, pub_per_page, articles_urls,
-                         next_class_name, driver, wait, pagination_sleep):
+                         driver, wait, pagination_sleep):
     # Gets the publications categories
     options = pub_categories.find_elements(By.TAG_NAME, 'li')
 
@@ -56,7 +56,7 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, pub_per_page, ar
             option.click()  # select box
 
             pagination_args = [requested_num_of_publ, pub_per_page, articles_urls,
-                               next_class_name, driver, wait]
+                               driver, wait, pagination_sleep]
 
             driver = paginate(*pagination_args)
 
@@ -66,7 +66,7 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, pub_per_page, ar
             pass
 
 
-def paginate(requested_num_of_publ, pub_per_page, articles_urls, driver, wait, tab_opened=False):
+def paginate(requested_num_of_publ, pub_per_page, articles_urls, driver, wait, pagination_sleep, tab_opened=False):
     next_btn = constants.NEXT_CLASS_NAME
     progress_bar_limit = 10
 
@@ -85,7 +85,7 @@ def paginate(requested_num_of_publ, pub_per_page, articles_urls, driver, wait, t
         progress.update(1)
 
         # Short break so the server do not block script
-        time.sleep(0.7)  # important: lower values result in error
+        time.sleep(pagination_sleep)  # important: lower than 0.8s values result in error
 
         # Parse web for urls
         articles_urls += [item.get_attribute("href") for item in wait.until(
