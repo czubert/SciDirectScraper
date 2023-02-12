@@ -23,6 +23,7 @@ class ScienceDirectParser:
         self.soup = None
         self.articles_urls = []
         self.window = window
+        self.num_of_pages = None
         # searching parameters
         self.keyword = keyword
         self.pub_per_page = 100
@@ -47,20 +48,32 @@ class ScienceDirectParser:
 
         wait = WebDriverWait(self.driver, 10)
 
-        if 0 < self.requested_num_of_publ <= 1000:
-            pagination_args = [self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
-                               self.driver, wait, pagination_sleep]
+        # Checks if limit of 1000 publications is exceeded, returns also the number of all papers
+        num_of_all_papers = pagination.get_max_num_of_publications(self.driver)
+
+        # checks if the number of pages for pagination is limited, also returns num of pages
+        limited_num_of_pages, self.num_of_pages = pagination.number_of_pages_limited(self.driver, num_of_all_papers)
+
+        # If requested number of publications or all available publications is less than 1000
+        if 0 < self.requested_num_of_publ <= 1000 or not limited_num_of_pages:
+
+            req_num_of_pages = self.requested_num_of_publ // 100 + 1
+            pagination_args = [self.requested_num_of_publ, self.articles_urls,
+                               self.driver, wait, pagination_sleep, req_num_of_pages]
+
             pagination.paginate(*pagination_args)
         else:
-            pub_categories = pagination.check_if_more_pubs_than_limit(self.driver, self.requested_num_of_publ)
+            pub_categories = pagination.get_pub_categories(self.driver)
+
             try:
+                # If there is a 'Show more' button in "Publication titles" category, then press it
                 show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
                 show_more_btn.click()
             except IndexError as e:
                 print(f'Index error in get articles urls: {e}')
 
             # If the number of available publications > 1000, pagination goes through pub title categories
-            pagination_args = [pub_categories, self.requested_num_of_publ, self.pub_per_page, self.articles_urls,
+            pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,
                                self.driver, wait, pagination_sleep]
             pagination.paginate_through_cat(*pagination_args)
 
@@ -110,7 +123,6 @@ class ScienceDirectParser:
 
     def parser_initialization(self):
         # Program start time
-
         self.start_time = utils.get_current_time()
 
         # DataFrame to collect all corresponding authors
@@ -142,8 +154,8 @@ class ScienceDirectParser:
             # Opens search engine from initial URL. Parse all publications urls page by page
             self.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=0.4)
 
-            # Takes opened driver and opens each publication in a new tab
-            self.parse_articles(self.driver, btn_click_sleep=0.25)
+            # # Takes opened driver and opens each publication in a new tab
+            self.parse_articles(btn_click_sleep=0.25)
 
         except Exception as e:
             print(f'Exception in main(): {e}')

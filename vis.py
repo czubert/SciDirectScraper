@@ -113,7 +113,7 @@ if btn:
 
         st.sidebar.write('Getting articles URLs...')
         # Opens search engine from initial URL. Parse all publications urls page by page
-        parser.get_articles_urls(open_browser_sleep=0.5, pagination_sleep=1.7)
+        parser.get_articles_urls(open_browser_sleep=1.3, pagination_sleep=1.3)
 
         ###
         # ====> Collecting authors data - parsing <====
@@ -144,7 +144,7 @@ if btn:
         with st.expander('Show data'):
             st.write(parser.authors_collection)  # Show results as DataFrame
 
-# balloons = False
-# if not balloons:
-#     st.balloons()
-#     balloons = True
+balloons = False
+if not balloons:
+    st.balloons()
+    balloons = True
