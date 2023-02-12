@@ -89,7 +89,6 @@ class ScienceDirectParser:
             self.requested_num_of_publ = len(self.articles_urls)
 
         # Goes through parsed urls to scrap the corresponding authors data
-        # for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
         for i, pub_url in enumerate(
                 tqdm(self.articles_urls[:self.requested_num_of_publ], desc="Publications completed")):
             parsed_article = Article(pub_url)
