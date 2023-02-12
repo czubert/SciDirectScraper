@@ -62,7 +62,7 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
 
     # Paginate through all categories of publications
     for i, option in enumerate(options):
-        num_of_articles_per_cat = int(re.sub('([()])+', '', option.text.split()[-1]))
+        num_of_articles_per_cat = int(re.sub('([()])+', '', option.text.split()[-1]).replace(',', ''))
         collected_urls += num_of_articles_per_cat
         num_of_pages_per_cat = num_of_articles_per_cat // 100 + 1
 
@@ -117,7 +117,6 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
 
         # Opens new tab. As "next" button available - there is more than 100 pubs for given params. And tab is closed
         if utils.does_element_exist(driver, tag=next_btn):
-            print(1132123123123123123)
             if categories is False:
                 wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).click()
             if not tab_opened and categories is True:
