@@ -36,7 +36,10 @@ def does_element_exist(driver, tag):
 
 def open_link_in_new_tab(driver, url):
     # Open a new tab
-    driver.execute_script("window.open('');")
+    try:
+        driver.execute_script("window.open('');")
+    except Exception as e:
+        print(e)
 
     # Switch to the new tab and open new URL
     driver.switch_to.window(driver.window_handles[1])

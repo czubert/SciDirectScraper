@@ -95,6 +95,7 @@ class Article:
 
     def parse_article(self, driver, sleep):
         try:
+
             driver = utils.open_link_in_new_tab(driver, self.url)
             button = driver.find_elements(By.XPATH, '//div[@class="author-group"]/button')
             for corr_author in button:  # Goes through all the authors )

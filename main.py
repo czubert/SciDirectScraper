@@ -52,11 +52,13 @@ class ScienceDirectParser:
         num_of_all_papers = pagination.get_max_num_of_publications(self.driver)
 
         # checks if the number of pages for pagination is limited, also returns num of pages
-        limited_num_of_pages, self.num_of_pages = pagination.number_of_pages_limited(self.driver, num_of_all_papers)
+        limited_num_of_pages, self.num_of_pages = pagination.number_of_pages_is_limited(self.driver, num_of_all_papers)
+
+        if num_of_all_papers < self.requested_num_of_publ:
+            self.requested_num_of_publ = num_of_all_papers
 
         # If requested number of publications or all available publications is less than 1000
-        if 0 < self.requested_num_of_publ <= 1000 or not limited_num_of_pages:
-
+        if 0 < self.requested_num_of_publ <= 1000 or num_of_all_papers <= 1000:
             req_num_of_pages = self.requested_num_of_publ // 100 + 1
             pagination_args = [self.requested_num_of_publ, self.articles_urls,
                                self.driver, wait, pagination_sleep, req_num_of_pages]
@@ -88,6 +90,8 @@ class ScienceDirectParser:
 
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(tqdm(self.articles_urls[:self.requested_num_of_publ])):
+        # for i, pub_url in enumerate(
+        #         tqdm(self.articles_urls[:self.requested_num_of_publ], desc="Publications completed")):
             parsed_article = Article(pub_url)
             parsed_article.parse_article(self.driver, sleep=btn_click_sleep)
             # self.add_records_to_collection(parsed_article.article_data_df)
@@ -152,7 +156,7 @@ class ScienceDirectParser:
         try:
             self.parser_initialization()
             # Opens search engine from initial URL. Parse all publications urls page by page
-            self.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=0.4)
+            self.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=0.7)
 
             # # Takes opened driver and opens each publication in a new tab
             self.parse_articles(btn_click_sleep=0.25)
@@ -164,7 +168,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=25,
+    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=1020,
                                   years=[x for x in range(2020, 2023)])
 
     science.scrap()
