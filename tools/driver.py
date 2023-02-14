@@ -25,7 +25,7 @@ def chrome_options():
 def chrome_init(_options):
     try:
         # return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=_options)
-        return webdriver.Chrome(service=ChromeService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()),
+        return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()),
                                 options=_options)
 
     except WebDriverException:
@@ -51,7 +51,6 @@ def initialize_driver(window):
 
     # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
-    options.add_argument("--window-size=1460,1440")
     options.add_argument('--disable-gpu')
     options.add_argument('--log-level=3')
     driver = chrome_init(options)
