@@ -53,6 +53,11 @@ def initialize_driver(window):
     options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
     options.add_argument('--disable-gpu')
     options.add_argument('--log-level=3')
+    options.add_argument("disable-infobars")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+
     driver = chrome_init(options)
     # driver = edge_init(options)
     # driver = firefox_init()
