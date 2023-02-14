@@ -43,11 +43,14 @@ def initialize_driver(window):
 
     # # to supress the error messages/logs
     options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
+    options.add_argument("--window-size=1460,1440")
     options.add_argument('--disable-gpu')
     options.add_argument('--log-level=3')
     driver = chrome_init(options)
     # driver = edge_init(options)
     # driver = firefox_init()
+
+    driver.set_window_position(0, -10)
 
     if window == 'Maximized':
         driver.maximize_window()

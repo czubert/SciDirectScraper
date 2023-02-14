@@ -23,10 +23,10 @@ class ScienceDirectParser:
         self.soup = None
         self.articles_urls = []
         self.window = window
-        self.num_of_pages = None
         # searching parameters
         self.keyword = keyword
         self.pub_per_page = 100
+        self.num_of_pages = None
         self.requested_num_of_publ = requested_num_of_publ
         self.years = years
         # Saving
@@ -44,6 +44,7 @@ class ScienceDirectParser:
 
     def get_articles_urls(self, open_browser_sleep, pagination_sleep):
         self.driver.get(self.parser_url)  # invoking driver - opening website
+
         time.sleep(open_browser_sleep)  # sleep so the browser has time to open
 
         wait = WebDriverWait(self.driver, 10)
@@ -58,23 +59,18 @@ class ScienceDirectParser:
             self.requested_num_of_publ = num_of_all_papers
 
         # If requested number of publications or all available publications is less than 1000
-        if 0 < self.requested_num_of_publ <= 1000 or num_of_all_papers <= 1000:
+
+        if 0 < self.requested_num_of_publ <= 1000 or num_of_all_papers <= (
+                self.pub_per_page * self.num_of_pages) or not limited_num_of_pages:
             req_num_of_pages = self.requested_num_of_publ // 100 + 1
             pagination_args = [self.requested_num_of_publ, self.articles_urls,
                                self.driver, wait, pagination_sleep, req_num_of_pages]
 
             pagination.paginate(*pagination_args)
         else:
+            # If the number of available publications > 100 * num_of_pages, pagination goes through pub title categories
             pub_categories = pagination.get_pub_categories(self.driver)
 
-            try:
-                # If there is a 'Show more' button in "Publication titles" category, then press it
-                show_more_btn = pub_categories.find_elements(By.XPATH, "(//span[@class='facet-link'])")[0]
-                show_more_btn.click()
-            except IndexError as e:
-                print(f'Index error in get articles urls: {e}')
-
-            # If the number of available publications > 1000, pagination goes through pub title categories
             pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,
                                self.driver, wait, pagination_sleep]
             pagination.paginate_through_cat(*pagination_args)
@@ -85,6 +81,8 @@ class ScienceDirectParser:
         then we change the overall number of requested publications,
         to the number of all publications
         """
+        # Getting rid of duplicates
+        self.articles_urls = list(set(self.articles_urls))
         if self.requested_num_of_publ == 0:
             self.requested_num_of_publ = len(self.articles_urls)
 
@@ -167,7 +165,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=1020,
-                                  years=[x for x in range(2020, 2023)])
+    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=0,
+                                  years=[x for x in range(2022, 2023)])
 
     science.scrap()

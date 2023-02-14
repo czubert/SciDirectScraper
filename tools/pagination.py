@@ -1,5 +1,9 @@
 import re
 import time
+
+import selenium.webdriver
+from selenium.webdriver.chrome import webdriver
+from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
 
 # Selenium
@@ -62,25 +66,44 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
 
     # Paginate through all categories of publications
     for i, option in enumerate(options):
+        if 'less' in option.text or 'more' in option.text:
+            continue
+
         num_of_articles_per_cat = int(re.sub('([()])+', '', option.text.split()[-1]).replace(',', ''))
         collected_urls += num_of_articles_per_cat
         num_of_pages_per_cat = num_of_articles_per_cat // 100 + 1
 
         try:
-            option.click()  # select box
+            # moving screen down so driver can click a category
+            driver.execute_script("arguments[0].scrollIntoView(true);", option)
+            driver.execute_script(f"window.scrollTo(0, -100);")
+
+            time.sleep(0.5)
+            before_click = driver.current_url
+            option.click()  # select box (category)
+            time.sleep(0.5)
+
+            # selecting cateegory changes url therefore if there is no change in url program skips and tries next one
+            if driver.current_url == before_click:
+                continue
 
             pagination_args = [requested_num_of_publ, articles_urls,
-                               driver, wait, pagination_sleep, num_of_pages_per_cat, categories, i+1, len(options)]
+                               driver, wait, pagination_sleep, num_of_pages_per_cat, categories, i + 1, len(options)]
 
             driver = paginate(*pagination_args)
 
-            option.click()  # unselect box
+            # moving screen down so driver can click a category
+            driver.execute_script("arguments[0].scrollIntoView(true);", option)
+            driver.execute_script(f"window.scrollTo(0, -100);")
+            time.sleep(0.5)
+            option.click()  # select box (category)
 
         except StaleElementReferenceException:
-            pass
+            return driver
 
-        if collected_urls >= requested_num_of_publ != 0:
-            break
+        if requested_num_of_publ != 0 and collected_urls >= requested_num_of_publ:
+            return driver
+    return driver
 
 
 def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_sleep, num_of_pages,
@@ -92,11 +115,13 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
     else:
         n_loops = num_of_pages
 
-    i = 0
+    # Progress bar
     if categories is True:
         progress = tqdm(desc=f'Pagination {cat_num}/{cat_max_num}', total=num_of_pages)
     else:
         progress = tqdm(desc=f'Pagination', total=num_of_pages)
+
+    i = 0
 
     while i < n_loops or n_loops == -1:
         # Update output progressbar

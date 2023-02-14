@@ -113,7 +113,7 @@ if btn:
 
         st.sidebar.write('Getting articles URLs...')
         # Opens search engine from initial URL. Parse all publications urls page by page
-        parser.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=1.2)
+        parser.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=1.0)
 
         ###
         # ====> Collecting authors data - parsing <====
