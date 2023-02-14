@@ -9,6 +9,7 @@ from selenium.common.exceptions import WebDriverException
 
 # for EDGE
 from selenium.webdriver.edge.service import Service as EdgeService
+from webdriver_manager.core.utils import ChromeType
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 # for Firefox
@@ -23,10 +24,13 @@ def chrome_options():
 
 def chrome_init(_options):
     try:
-        return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=_options)
+        # return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=_options)
+        return webdriver.Chrome(service=ChromeService(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()),
+                                options=_options)
 
     except WebDriverException:
         return webdriver.Chrome(service=ChromeService(), options=_options)
+
 
 # EDGE
 def edge_options():

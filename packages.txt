@@ -2,5 +2,4 @@ freeglut3-dev
 libgtk2.0-dev
 chromium
 chromium-driver
-chrome
-chrome-driver
+chromedriver
