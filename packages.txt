@@ -1,6 +1,1 @@
-freeglut3-dev
-libgtk2.0-dev
-chromium
-chromium-driver
-firefox-esr
 chromium
