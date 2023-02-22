@@ -69,8 +69,10 @@ class ScienceDirectParser:
             pagination.paginate(*pagination_args)
         else:
             # If the number of available publications > 100 * num_of_pages, pagination goes through pub title categories
-            categories_num = [2, 3]  # index of the categories on website
+            categories_num = [2, 3, 4, 5]  # index of the categories on website
             for el in categories_num:
+                print(el)
+                print(20*'=')
                 pub_categories = pagination.get_pub_categories(self.driver, el)
 
                 pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,

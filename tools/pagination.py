@@ -67,6 +67,7 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
     # Paginate through all categories of publications
     for i, option in enumerate(options):
         if 'less' in option.text or 'more' in option.text:
+            option.click()  # should hide categories
             continue
 
         num_of_articles_per_cat = int(re.sub('([()])+', '', option.text.split()[-1]).replace(',', ''))
@@ -87,10 +88,15 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
             if driver.current_url == before_click:
                 continue
 
-            pagination_args = [requested_num_of_publ, articles_urls,
-                               driver, wait, pagination_sleep, num_of_pages_per_cat, categories, i + 1, len(options)]
+            if not utils.does_element_exist(driver, tag=constants.NEXT_CLASS_NAME):
+                # Parse web for urls
+                articles_urls += [item.get_attribute("href") for item in wait.until(
+                    EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
+            else:
+                pagination_args = [requested_num_of_publ, articles_urls,
+                                   driver, wait, pagination_sleep, num_of_pages_per_cat, categories, i + 1, len(options)]
 
-            driver = paginate(*pagination_args)
+                driver = paginate(*pagination_args)
 
             # moving screen down so driver can click a category
             driver.execute_script("arguments[0].scrollIntoView(true);", option)
