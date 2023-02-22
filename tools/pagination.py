@@ -140,7 +140,7 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
             EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
 
         # there is fewer publications requested than 100, so all fit in one page
-        if n_loops == 1:
+        if n_loops == 1 or num_of_pages==1:
             return driver
 
         # Scrolls to the bottom to avoid 'feedback' pop-up
@@ -158,9 +158,10 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
                 continue
             if tab_opened and categories is True:
                 wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).click()
-
-        else:
+        elif tab_opened:
             utils.close_link_tab(driver)
+            return driver
+        else:
             return driver
 
         i += 1

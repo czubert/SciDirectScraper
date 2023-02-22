@@ -95,9 +95,8 @@ class Article:
 
     def parse_article(self, driver, sleep):
         try:
-
             driver = utils.open_link_in_new_tab(driver, self.url)
-            button = driver.find_elements(By.XPATH, '//div[@class="author-group"]/button')
+            button = driver.find_elements(By.CLASS_NAME, 'icon-envelope')  # todo tutaj poprawić
             for corr_author in button:  # Goes through all the authors )
                 Article.click_author_buttons(driver, corr_author)
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
