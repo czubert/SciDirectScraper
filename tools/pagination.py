@@ -123,7 +123,7 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
 
     # Progress bar
     if categories is True:
-        progress = tqdm(desc=f'Pagination {cat_num}/{cat_max_num}', total=num_of_pages)
+        progress = tqdm(desc=f'Category {cat_num} of of {cat_max_num}', total=num_of_pages)
     else:
         progress = tqdm(desc=f'Pagination', total=num_of_pages)
 
