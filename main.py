@@ -13,7 +13,7 @@ from tools.article import Article
 
 
 class ScienceDirectParser:
-    def __init__(self, window='maximized', keyword='SERS', requested_num_of_publ=2,
+    def __init__(self, window='Maximized', keyword='SERS', requested_num_of_publ=2,
                  years=tuple([2022])):
         # Parsing
         self.driver = None
@@ -69,11 +69,13 @@ class ScienceDirectParser:
             pagination.paginate(*pagination_args)
         else:
             # If the number of available publications > 100 * num_of_pages, pagination goes through pub title categories
-            pub_categories = pagination.get_pub_categories(self.driver)
+            categories_num = [2, 3]  # index of the categories on website
+            for el in categories_num:
+                pub_categories = pagination.get_pub_categories(self.driver, el)
 
-            pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,
-                               self.driver, wait, pagination_sleep]
-            pagination.paginate_through_cat(*pagination_args)
+                pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,
+                                   self.driver, wait, pagination_sleep]
+                pagination.paginate_through_cat(*pagination_args)
 
     def parse_articles(self, btn_click_sleep, pbar=None):
         """

@@ -46,8 +46,8 @@ def get_max_num_of_publications(driver):
     return max_num_of_papers
 
 
-def get_pub_categories(driver):
-    cat = driver.find_element(By.XPATH, "(//div[@class='FacetItem'])[3]/fieldset/ol")
+def get_pub_categories(driver, el):
+    cat = driver.find_element(By.XPATH, f"(//div[@class='FacetItem'])[{el}]/fieldset/ol")
     try:
         cat.find_element(By.TAG_NAME, 'button').click()
     except NoSuchElementException as e:
