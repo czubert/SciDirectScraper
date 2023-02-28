@@ -25,13 +25,26 @@ def create_named_dataframe():
     return df
 
 
-def does_element_exist(driver, tag):
+def does_link_text_exist(driver, tag):
     try:
         element_exist = driver.find_element(By.LINK_TEXT, tag)  # .is_displayed()
     except NoSuchElementException:
         element_exist = False
 
     return element_exist
+
+
+def does_tag_exist(driver, tag):
+    try:
+        element_exist = driver.find_element(By.TAG_NAME, tag)  # .is_displayed()
+    except NoSuchElementException:
+        element_exist = False
+
+    return element_exist
+
+
+def get_num_of_pages(driver):
+    return int(driver.find_element(By.CLASS_NAME, 'Pagination').text.split()[-1].replace('next', ''))
 
 
 def open_link_in_new_tab(driver, url):

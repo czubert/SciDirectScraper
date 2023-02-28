@@ -48,12 +48,13 @@ def get_max_num_of_publications(driver):
 
 def get_pub_categories(driver, el):
     cat = driver.find_element(By.XPATH, f"(//div[@class='FacetItem'])[{el}]/fieldset/ol")
+    # Click 'show more' button if exists
     try:
         cat.find_element(By.TAG_NAME, 'button').click()
+        return cat
     except NoSuchElementException as e:
         print(f'No "show more" button found: {e}')
-
-    return cat
+        return cat
 
 
 def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
@@ -62,53 +63,54 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
     options = pub_categories.find_elements(By.TAG_NAME, 'li')
     categories = True
 
-    collected_urls = 0
-
     # Paginate through all categories of publications
     for i, option in enumerate(options):
-        if 'less' in option.text or 'more' in option.text:
-            option.click()  # should hide categories
-            continue
-
-        num_of_articles_per_cat = int(re.sub('([()])+', '', option.text.split()[-1]).replace(',', ''))
-        collected_urls += num_of_articles_per_cat
-        num_of_pages_per_cat = num_of_articles_per_cat // 100 + 1
-
         try:
-            # moving screen down so driver can click a category
+            # moving screen to the element so driver can click a category
             driver.execute_script("arguments[0].scrollIntoView(true);", option)
-            driver.execute_script(f"window.scrollTo(0, -100);")
 
-            time.sleep(0.5)
+            # If the text of 'option' contains 'less' it means that all the categories were already checked
+            if 'less' in option.text:
+                break
+
+            # Gets number of publication in selected category, might be useful one day...
+            num_of_articles_in_cat = int(re.sub('([()])+', '', option.text.split()[-1]).replace(',', ''))
+
             before_click = driver.current_url
             option.click()  # select box (category)
             time.sleep(0.5)
+
+            # Gets numer of pages for the selected category
+            num_of_pages_in_cat = utils.get_num_of_pages(driver)
 
             # selecting cateegory changes url therefore if there is no change in url program skips and tries next one
             if driver.current_url == before_click:
                 continue
 
-            if not utils.does_element_exist(driver, tag=constants.NEXT_CLASS_NAME):
+            if not utils.does_link_text_exist(driver, tag=constants.NEXT_CLASS_NAME):
                 # Parse web for urls
                 articles_urls += [item.get_attribute("href") for item in wait.until(
                     EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
             else:
                 pagination_args = [requested_num_of_publ, articles_urls,
-                                   driver, wait, pagination_sleep, num_of_pages_per_cat, categories, i + 1, len(options)]
+                                   driver, wait, pagination_sleep, num_of_pages_in_cat, categories, i + 1,
+                                   len(options)]
 
                 driver = paginate(*pagination_args)
-
-            # moving screen down so driver can click a category
+            # moving screen so driver can "unclick" a category
             driver.execute_script("arguments[0].scrollIntoView(true);", option)
-            driver.execute_script(f"window.scrollTo(0, -100);")
-            time.sleep(0.5)
-            option.click()  # select box (category)
+            # driver.execute_script(f"window.scrollTo(0, -100);")  # todo sprawdzic czy z tym jest lepiej czy nie
+            time.sleep(0.4)
+            option.click()  # unselect box (category)
+            time.sleep(0.4)
 
         except StaleElementReferenceException:
+            utils.close_link_tab(driver)
             return driver
 
-        if requested_num_of_publ != 0 and collected_urls >= requested_num_of_publ:
+        if requested_num_of_publ != 0 and len(articles_urls) >= requested_num_of_publ:
             return driver
+
     return driver
 
 
@@ -135,33 +137,35 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
 
         # Short break so the server do not block script
         time.sleep(pagination_sleep)  # important: lower than 0.8s values result in error
-        # Parse web for urls
+        # Parse the first view of the web for urls, before pagination strats
         articles_urls += [item.get_attribute("href") for item in wait.until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "result-list-title-link")))]
 
         # there is fewer publications requested than 100, so all fit in one page
-        if n_loops == 1 or num_of_pages==1:
+        if n_loops == 1 or num_of_pages == 1:
             return driver
 
         # Scrolls to the bottom to avoid 'feedback' pop-up
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
+        time.sleep(0.3)
         # Opens new tab. As "next" button available - there is more than 100 pubs for given params. And tab is closed
-        if utils.does_element_exist(driver, tag=next_btn):
+        if utils.does_link_text_exist(driver, tag=next_btn):
             if categories is False:
                 wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).click()
             if not tab_opened and categories is True:
                 # Opening 'next button' in new tab instead of clicking it, so the pub categories do not hide
                 url = wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).get_attribute('href')
+                time.sleep(0.2)
                 driver = utils.open_link_in_new_tab(driver, url)
+                time.sleep(0.3)
                 tab_opened = True
+                i += 1
                 continue
             if tab_opened and categories is True:
                 wait.until(EC.presence_of_element_located((By.LINK_TEXT, next_btn))).click()
-        elif tab_opened:
-            utils.close_link_tab(driver)
-            return driver
+
         else:
+            utils.close_link_tab(driver)
             return driver
 
         i += 1

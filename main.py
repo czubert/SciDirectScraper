@@ -71,15 +71,16 @@ class ScienceDirectParser:
             # If the number of available publications > 100 * num_of_pages, pagination goes through pub title categories
             categories_num = [2, 3, 4, 5]  # index of the categories on website
             for el in categories_num:
-                print(el)
-                print(20*'=')
-                pub_categories = pagination.get_pub_categories(self.driver, el)
+                try:
+                    pub_categories = pagination.get_pub_categories(self.driver, el)
+                except Exception:
+                    continue
 
                 pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,
                                    self.driver, wait, pagination_sleep]
                 pagination.paginate_through_cat(*pagination_args)
 
-    def parse_articles(self, btn_click_sleep, pbar=None):
+    def parse_articles(self, btn_click_sleep, open_url_sleep, pbar=None):
         """
         If requested number of publications is 0 - all, 
         then we change the overall number of requested publications,
@@ -93,6 +94,7 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(
                 tqdm(self.articles_urls[:self.requested_num_of_publ], desc="Publications completed")):
+            time.sleep(open_url_sleep)  # wait before opening new url, not to get caught
             parsed_article = Article(pub_url)
             parsed_article.parse_article(self.driver, sleep=btn_click_sleep)
             # self.add_records_to_collection(parsed_article.article_data_df)
@@ -126,7 +128,7 @@ class ScienceDirectParser:
         else:
             record.to_csv(self.file_name, mode='a', header=False)
 
-    def parser_initialization(self):
+    def parser_init(self):
         # Program start time
         self.start_time = utils.get_current_time()
 
@@ -154,22 +156,39 @@ class ScienceDirectParser:
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
     def scrap(self):
+        open_browser_sleep = 1.5
+        pagination_sleep = 0.7
+        btn_click_sleep = 0.5
+        open_url_sleep = 0.5
+
         try:
-            self.parser_initialization()
+            self.parser_init()
             # Opens search engine from initial URL. Parse all publications urls page by page
-            self.get_articles_urls(open_browser_sleep=1.5, pagination_sleep=0.7)
-
-            # # Takes opened driver and opens each publication in a new tab
-            self.parse_articles(btn_click_sleep=0.25)
-
         except Exception as e:
-            print(f'Exception in main(): {e}')
-        finally:
+            print(f'Exception in scrap() in parser_init: {e}')
+
+        try:
+            self.get_articles_urls(open_browser_sleep, pagination_sleep)
+        except Exception as e:
+            print(f'Exception in scrap() in get_articles_urls: {e}')
+
+        try:
+            # # Takes opened driver and opens each publication in a new tab
+            self.parse_articles(btn_click_sleep, open_url_sleep)
+        except Exception as e:
+            self.driver = driver.initialize_driver(self.window)
+            self.driver.get('https://sersitive.eu')
+            self.parse_articles(btn_click_sleep, open_url_sleep)
+            print(f'Exception in scrap() in parse_articles: {e}')
+
+        try:
             self.data_postprocessing()
+        except Exception as e:
+            print(f'Exception in scrap() in data_postprocessing: {e}')
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=0,
-                                  years=[x for x in range(2020, 2023)])
+    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=0,
+                                  years=[x for x in range(2010, 2023)])
 
     science.scrap()

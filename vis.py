@@ -105,7 +105,7 @@ if btn:
 
         # Creates named DataFrame for data storage, creates parser URL, initialize WebDriver
         st.sidebar.write('Parser initialization...')
-        parser.parser_initialization()
+        parser.parser_init()
 
         ###
         # ====> Getting articles URLs <====
