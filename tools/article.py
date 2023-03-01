@@ -42,6 +42,11 @@ class Article:
             print(f'Getting article title failed! Reason?: {e}')
 
     def get_year(self, soup):
+        """
+        Getting the year of publication.
+        Different approaches are used as depending on publication it is stored differently
+        :param soup: Page content. Parser object
+        """
         try:
             for year in soup.find_all('div', {'class': 'text-xs'}):
                 year = year.text
@@ -87,23 +92,28 @@ class Article:
 
     @staticmethod
     def click_author_buttons(driver, auth):
-        try:
-            actions = ActionChains(driver)
-            actions.click(auth)
-            actions.perform()
-        except ElementNotInteractableException as e:
-            print(f'Clicking authors button failed:{e}')
-        except MoveTargetOutOfBoundsException as e:
-            print(f'Clicking authors button failed:{e}')
+        actions = ActionChains(driver)
+        actions.click(auth)
+        actions.perform()
 
     def parse_article(self, driver, sleep):
         try:
             driver = utils.open_link_in_new_tab(driver, self.url)
-            button = driver.find_elements(By.CLASS_NAME, 'icon-envelope')
-            for corr_author in button:  # Goes only through corresponding authors
+            corr_authors = driver.find_elements(By.CLASS_NAME, 'icon-envelope')
+            driver.execute_script("arguments[0].scrollIntoView(true);", corr_authors)
+            for corr_author in corr_authors:  # Goes only through corresponding authors
                 time.sleep(0.5)
-                Article.click_author_buttons(driver, corr_author)
+                try:
+                    Article.click_author_buttons(driver, corr_author)
+                except ElementNotInteractableException:
+                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    Article.click_author_buttons(driver, corr_author)
+                except MoveTargetOutOfBoundsException:
+                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                    Article.click_author_buttons(driver, corr_author)
+
                 soup = BeautifulSoup(driver.page_source, 'html.parser')
+
                 for data in soup.find_all('div', {'class': 'WorkspaceAuthor'}):
                     self.get_article_meta(soup)
                     self.get_author_meta(data)

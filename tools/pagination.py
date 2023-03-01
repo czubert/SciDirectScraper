@@ -47,9 +47,9 @@ def get_max_num_of_publications(driver):
 
 
 def get_pub_categories(driver, el):
-    cat = driver.find_element(By.XPATH, f"(//div[@class='FacetItem'])[{el}]/fieldset/ol")
-    # Click 'show more' button if exists
     try:
+        cat = driver.find_element(By.XPATH, f"(//div[@class='FacetItem'])[{el}]/fieldset/ol")
+        # Click 'show more' button if exists
         cat.find_element(By.TAG_NAME, 'button').click()
         return cat
     except NoSuchElementException as e:
