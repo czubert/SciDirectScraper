@@ -3,7 +3,8 @@ import time
 
 import pandas as pd
 from bs4 import BeautifulSoup
-from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, \
+    MoveTargetOutOfBoundsException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
@@ -91,6 +92,8 @@ class Article:
             actions.click(auth)
             actions.perform()
         except ElementNotInteractableException as e:
+            print(f'Clicking authors button failed:{e}')
+        except MoveTargetOutOfBoundsException as e:
             print(f'Clicking authors button failed:{e}')
 
     def parse_article(self, driver, sleep):

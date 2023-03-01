@@ -94,10 +94,18 @@ class ScienceDirectParser:
         # Goes through parsed urls to scrap the corresponding authors data
         for i, pub_url in enumerate(
                 tqdm(self.articles_urls[:self.requested_num_of_publ], desc="Publications completed")):
+
+            if not pub_url:
+                continue
+
             time.sleep(open_url_sleep)  # wait before opening new url, not to get caught
-            parsed_article = Article(pub_url)
-            parsed_article.parse_article(self.driver, sleep=btn_click_sleep)
-            # self.add_records_to_collection(parsed_article.article_data_df)
+            try:
+                parsed_article = Article(pub_url)
+                parsed_article.parse_article(self.driver, sleep=btn_click_sleep)
+            except Exception as e:
+                print(f'Exception in parse_articles with: {e}')
+                continue
+
             self.add_records_to_file(parsed_article.article_data_df)
 
             # Information about the progress (from streamlit)
@@ -110,10 +118,9 @@ class ScienceDirectParser:
         self.authors_collection = pd.concat((self.authors_collection, record))
 
     def add_records_to_file(self, record):
-        path = 'output/partial/'
+        dir_name = 'output/authors'
 
-        if not os.path.isdir(path):
-            os.mkdir(path)
+        utils.check_if_dir_exists(dir_name)
 
         if len(self.years) == 1:
             year = str(self.years[0])
@@ -121,7 +128,7 @@ class ScienceDirectParser:
             years = sorted(self.years)
             year = f'{years[0]}-{years[-1]}'
 
-        self.file_name = f'{path}{self.keyword}__{year}__{self.start_time}.csv'
+        self.file_name = f'{dir_name}/{self.keyword}__{year}__{self.start_time}.csv'
 
         if not os.path.isfile(self.file_name):
             record.to_csv(self.file_name, mode='a', header=constants.COLUMNS)
@@ -156,10 +163,10 @@ class ScienceDirectParser:
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
     def scrap(self):
-        open_browser_sleep = 1.5
-        pagination_sleep = 0.7
-        btn_click_sleep = 0.5
-        open_url_sleep = 0.5
+        open_browser_sleep = 2.5
+        pagination_sleep = 1.1
+        btn_click_sleep = 0.8
+        open_url_sleep = 1.0
 
         try:
             self.parser_init()
@@ -168,7 +175,16 @@ class ScienceDirectParser:
             print(f'Exception in scrap() in parser_init: {e}')
 
         try:
-            self.get_articles_urls(open_browser_sleep, pagination_sleep)
+            urls_path = f'output/urls'
+            urls_name = 'urls.csv'
+
+            if os.path.isfile(urls_path):
+                self.articles_urls = utils.read_urls(urls_path)
+            else:
+                self.get_articles_urls(open_browser_sleep, pagination_sleep)
+                utils.write_urls_to_file(self.articles_urls, dir_name=urls_path, urls_name=urls_name)
+                utils.write_urls_to_file([], dir_name='output/urls', urls_name=f'{len(self.articles_urls)}.csv')
+
         except Exception as e:
             print(f'Exception in scrap() in get_articles_urls: {e}')
 
@@ -188,7 +204,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=0,
-                                  years=[x for x in range(2010, 2023)])
+    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=0,
+                                  years=[x for x in range(2019, 2023)])
 
     science.scrap()

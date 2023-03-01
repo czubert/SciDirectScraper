@@ -1,4 +1,6 @@
 import datetime
+import os
+
 import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -88,3 +90,21 @@ def return_first_el(x):
 def group_by_email(df):
     # returns grouped and agg df
     return df.groupby('email').agg(lambda x: list(x) if (x.name not in ['name', 'surname']) else x[0])
+
+
+def check_if_dir_exists(dir_name):
+    if not os.path.isdir(dir_name):
+        os.mkdir(dir_name)
+
+
+def write_urls_to_file(urls, dir_name, urls_name):
+    check_if_dir_exists(dir_name)
+
+    with open(f'{dir_name}/{urls_name}', 'w+') as f:
+        for el in urls:
+            f.write(el + ',')
+
+
+def read_urls(urls_path):
+    with open(urls_path, 'r') as f:
+        return f.readlines()[0].split(',')
