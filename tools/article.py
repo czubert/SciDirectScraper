@@ -100,16 +100,19 @@ class Article:
         try:
             driver = utils.open_link_in_new_tab(driver, self.url)
             corr_authors = driver.find_elements(By.CLASS_NAME, 'icon-envelope')
-            driver.execute_script("arguments[0].scrollIntoView(true);", corr_authors)
+
             for corr_author in corr_authors:  # Goes only through corresponding authors
                 time.sleep(0.5)
                 try:
                     Article.click_author_buttons(driver, corr_author)
-                except ElementNotInteractableException:
-                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                except ElementNotInteractableException as e:
+                    print(f'parse_article not interactable exception: {e}')
+                    # driver.execute_script("window.scrollTo(0, 100);")
+                    driver.execute_script("arguments[0].scrollIntoView(true);", corr_authors)
                     Article.click_author_buttons(driver, corr_author)
-                except MoveTargetOutOfBoundsException:
-                    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                except MoveTargetOutOfBoundsException as e:
+                    print(f'parse_article target out of bounds exception: {e}')
+                    driver.execute_script("window.scrollTo(0, 100);")
                     Article.click_author_buttons(driver, corr_author)
 
                 soup = BeautifulSoup(driver.page_source, 'html.parser')

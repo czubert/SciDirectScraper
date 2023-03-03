@@ -47,8 +47,8 @@ def get_max_num_of_publications(driver):
 
 
 def get_pub_categories(driver, el):
+    cat = driver.find_element(By.XPATH, f"(//div[@class='FacetItem'])[{el}]/fieldset/ol")
     try:
-        cat = driver.find_element(By.XPATH, f"(//div[@class='FacetItem'])[{el}]/fieldset/ol")
         # Click 'show more' button if exists
         cat.find_element(By.TAG_NAME, 'button').click()
         return cat
@@ -58,7 +58,7 @@ def get_pub_categories(driver, el):
 
 
 def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
-                         driver, wait, pagination_sleep):
+                         driver, wait, pagination_sleep, req_num_of_pages):
     # Gets the publications categories
     options = pub_categories.find_elements(By.TAG_NAME, 'li')
     categories = True
@@ -83,6 +83,10 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
             # Gets numer of pages for the selected category
             num_of_pages_in_cat = utils.get_num_of_pages(driver)
 
+            # if requested number of pages is lower, we shouldn't paginate through all pages
+            if req_num_of_pages < num_of_pages_in_cat:
+                num_of_pages_in_cat = req_num_of_pages
+
             # selecting cateegory changes url therefore if there is no change in url program skips and tries next one
             if driver.current_url == before_click:
                 continue
@@ -97,6 +101,7 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
                                    len(options)]
 
                 driver = paginate(*pagination_args)
+
             # moving screen so driver can "unclick" a category
             driver.execute_script("arguments[0].scrollIntoView(true);", option)
             # driver.execute_script(f"window.scrollTo(0, -100);")  # todo sprawdzic czy z tym jest lepiej czy nie
@@ -125,7 +130,7 @@ def paginate(requested_num_of_publ, articles_urls, driver, wait, pagination_slee
 
     # Progress bar
     if categories is True:
-        progress = tqdm(desc=f'Category {cat_num} of of {cat_max_num}', total=num_of_pages)
+        progress = tqdm(desc=f'Category {cat_num} of {cat_max_num}', total=num_of_pages)
     else:
         progress = tqdm(desc=f'Pagination', total=num_of_pages)
 

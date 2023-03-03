@@ -62,12 +62,21 @@ class ScienceDirectParser:
 
         if 0 < self.requested_num_of_publ <= 1000 or num_of_all_papers <= (
                 self.pub_per_page * self.num_of_pages) or not limited_num_of_pages:
+
             req_num_of_pages = self.requested_num_of_publ // 100 + 1
+
             pagination_args = [self.requested_num_of_publ, self.articles_urls,
                                self.driver, wait, pagination_sleep, req_num_of_pages]
 
             pagination.paginate(*pagination_args)
+
         else:
+
+            if self.requested_num_of_publ == 0:
+                req_num_of_pages = num_of_all_papers // 100 + 1
+            else:
+                req_num_of_pages = self.requested_num_of_publ // 100 + 1
+
             # If the number of available publications > 100 * num_of_pages, pagination goes through pub title categories
             categories_num = [2, 3, 4, 5]  # index of the categories on website
             for el in categories_num:
@@ -77,7 +86,8 @@ class ScienceDirectParser:
                     continue
 
                 pagination_args = [pub_categories, self.requested_num_of_publ, self.articles_urls,
-                                   self.driver, wait, pagination_sleep]
+                                   self.driver, wait, pagination_sleep, req_num_of_pages]
+
                 pagination.paginate_through_cat(*pagination_args)
 
     def parse_articles(self, btn_click_sleep, open_url_sleep, pbar=None):
@@ -91,10 +101,10 @@ class ScienceDirectParser:
         if self.requested_num_of_publ == 0:
             self.requested_num_of_publ = len(self.articles_urls)
 
-        # Goes through parsed urls to scrap the corresponding authors data
-        for i, pub_url in enumerate(
-                tqdm(self.articles_urls[:self.requested_num_of_publ], desc="Publications completed")):
+        for i in tqdm(range(self.requested_num_of_publ)):
+            pub_url = self.articles_urls.pop()
 
+            # skipping empty strings in the list of urls
             if not pub_url:
                 continue
 
@@ -112,6 +122,32 @@ class ScienceDirectParser:
             if pbar is not None:
                 pbar.progress((i + 1) / self.requested_num_of_publ)
 
+        # # Goes through parsed urls to scrap the corresponding authors data
+        # for i, pub_url in enumerate(
+        #         tqdm(self.articles_urls[:self.requested_num_of_publ], desc="Publications completed")):
+        #
+        #     # skipping empty strings in the list of urls
+        #     if not pub_url:
+        #         continue
+        #
+        #     time.sleep(open_url_sleep)  # wait before opening new url, not to get caught
+        #     try:
+        #         parsed_article = Article(pub_url)
+        #         parsed_article.parse_article(self.driver, sleep=btn_click_sleep)
+        #     except Exception as e:
+        #         print(f'Exception in parse_articles with: {e}')
+        #         continue
+        #
+        #     self.add_records_to_file(parsed_article.article_data_df)
+        #
+        #     # Information about the progress (from streamlit)
+        #     if pbar is not None:
+        #         pbar.progress((i + 1) / self.requested_num_of_publ)
+
+        urls_path = f'output/urls'
+        urls_name = 'urls.csv'
+
+        utils.write_urls_to_file(self.articles_urls, dir_name=urls_path, urls_name=urls_name)
         self.driver.close()
 
     def add_records_to_collection(self, record):
@@ -163,7 +199,7 @@ class ScienceDirectParser:
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
     def scrap(self):
-        open_browser_sleep = 2.5
+        open_browser_sleep = 1.5
         pagination_sleep = 1.1
         btn_click_sleep = 0.8
         open_url_sleep = 1.0
@@ -178,8 +214,8 @@ class ScienceDirectParser:
             urls_path = f'output/urls'
             urls_name = 'urls.csv'
 
-            if os.path.isfile(urls_path):
-                self.articles_urls = utils.read_urls(urls_path)
+            if os.path.isfile(urls_path + '/' + urls_name):
+                self.articles_urls = utils.read_urls(urls_path + '/' + urls_name)
             else:
                 self.get_articles_urls(open_browser_sleep, pagination_sleep)
                 utils.write_urls_to_file(self.articles_urls, dir_name=urls_path, urls_name=urls_name)
@@ -204,7 +240,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=0,
-                                  years=[x for x in range(2019, 2023)])
+    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=0,
+                                  years=[x for x in range(2009, 2010)])
 
     science.scrap()
