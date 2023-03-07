@@ -32,17 +32,17 @@ def get_max_num_of_publications(driver):
     :param driver: Selenium Webdriver
     :return: list
     """
-    # number of publications per year
-    # if there are fewer publications than requested,
-    pub_numbs_per_year = driver.find_element(By.XPATH, "(//div[@class='FacetItem'][1]/fieldset/ol)")
+    # # number of publications per year
+    # # if there are fewer publications than requested,
     max_num_of_papers = 0
-    papers = pub_numbs_per_year.text.split()
+    try:
+        max_num_of_papers = int(
+            driver.find_element(By.CLASS_NAME, "search-body-results-text").text.split()[0].replace(',', ''))
+    except ValueError as e:
+        print(f'Value error in get_max_num_of_publications: {e}')
+    except AttributeError as e:
+        print(f'Value error in get_max_num_of_publications: {e}')
 
-    for i in range(1, len(papers) + 1, 2):
-        try:
-            max_num_of_papers += int(re.sub(r'([()])*', '', papers[i]).replace(',', ''))
-        except ValueError:
-            continue
     return max_num_of_papers
 
 
@@ -104,7 +104,7 @@ def paginate_through_cat(pub_categories, requested_num_of_publ, articles_urls,
 
             # moving screen so driver can "unclick" a category
             driver.execute_script("arguments[0].scrollIntoView(true);", option)
-            # driver.execute_script(f"window.scrollTo(0, -100);")  # todo sprawdzic czy z tym jest lepiej czy nie
+
             time.sleep(0.4)
             option.click()  # unselect box (category)
             time.sleep(0.4)

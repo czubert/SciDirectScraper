@@ -2,6 +2,7 @@ import os
 import time
 
 import pandas as pd
+from selenium.common import NoSuchWindowException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
@@ -50,7 +51,14 @@ class ScienceDirectParser:
         wait = WebDriverWait(self.driver, 10)
 
         # Checks if limit of 1000 publications is exceeded, returns also the number of all papers
-        num_of_all_papers = pagination.get_max_num_of_publications(self.driver)
+        try:
+            num_of_all_papers = pagination.get_max_num_of_publications(self.driver)
+        except NoSuchWindowException:
+            print('No results. Change criteria')
+            return
+        except IndexError:
+            print('No results. Change criteria')
+            return
 
         # checks if the number of pages for pagination is limited, also returns num of pages
         limited_num_of_pages, self.num_of_pages = pagination.number_of_pages_is_limited(self.driver, num_of_all_papers)
@@ -92,7 +100,7 @@ class ScienceDirectParser:
 
     def parse_articles(self, btn_click_sleep, open_url_sleep, pbar=None):
         """
-        If requested number of publications is 0 - all, 
+        If requested number of publications is 0 - all,
         then we change the overall number of requested publications,
         to the number of all publications
         """
@@ -227,7 +235,10 @@ class ScienceDirectParser:
         try:
             # # Takes opened driver and opens each publication in a new tab
             self.parse_articles(btn_click_sleep, open_url_sleep)
-        except Exception as e:
+        except IndexError as e:
+            print(f'No more URLs to parse: {e}')
+
+        except NoSuchWindowException as e:
             self.driver = driver.initialize_driver(self.window)
             self.driver.get('https://sersitive.eu')
             self.parse_articles(btn_click_sleep, open_url_sleep)
@@ -241,6 +252,6 @@ class ScienceDirectParser:
 
 if __name__ == '__main__':
     science = ScienceDirectParser(keyword='sers', requested_num_of_publ=0,
-                                  years=[x for x in range(2009, 2010)])
+                                  years=[x for x in range(2020, 2025)])
 
     science.scrap()
