@@ -1,4 +1,5 @@
 import os
+import glob
 import time
 
 import pandas as pd
@@ -152,7 +153,7 @@ class ScienceDirectParser:
         #     if pbar is not None:
         #         pbar.progress((i + 1) / self.requested_num_of_publ)
 
-        urls_path = f'output/urls'
+        urls_path = f'output/tmp_urls'
         urls_name = 'urls.csv'
 
         utils.write_urls_to_file(self.articles_urls, dir_name=urls_path, urls_name=urls_name)
@@ -206,6 +207,15 @@ class ScienceDirectParser:
 
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
+        try:
+            files = glob.glob('output/tmp_urls/*')
+            for f in files:
+                os.remove(f)
+            os.rmdir('output/tmp_urls/')
+
+        except Exception as e:
+            print(f"No url's to be removed{e}")
+
     def scrap(self):
         open_browser_sleep = 1.5
         pagination_sleep = 1.1
@@ -219,7 +229,7 @@ class ScienceDirectParser:
             print(f'Exception in scrap() in parser_init: {e}')
 
         try:
-            urls_path = f'output/urls'
+            urls_path = f'output/tmp_urls'
             urls_name = 'urls.csv'
 
             if os.path.isfile(urls_path + '/' + urls_name):
@@ -227,7 +237,7 @@ class ScienceDirectParser:
             else:
                 self.get_articles_urls(open_browser_sleep, pagination_sleep)
                 utils.write_urls_to_file(self.articles_urls, dir_name=urls_path, urls_name=urls_name)
-                utils.write_urls_to_file([], dir_name='output/urls', urls_name=f'{len(self.articles_urls)}.csv')
+                utils.write_urls_to_file([], dir_name=urls_path, urls_name=f'{len(self.articles_urls)}.csv')
 
         except Exception as e:
             print(f'Exception in scrap() in get_articles_urls: {e}')
@@ -251,7 +261,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sers', requested_num_of_publ=0,
+    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=0,
                                   years=[x for x in range(2020, 2025)])
 
     science.scrap()
