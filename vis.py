@@ -123,7 +123,7 @@ if btn:
         # initializing progressbar for authors collection
         progress_bar = st.sidebar.progress(0)
         # Takes opened driver and opens each publication in a new tab
-        parser.parse_articles(btn_click_sleep=0.25, pbar=progress_bar)
+        parser.parse_articles(btn_click_sleep=0.25, open_url_sleep=1.0, pbar=progress_bar)
         # Showing progressbar
         try:
             st.sidebar.write(progress_bar)
