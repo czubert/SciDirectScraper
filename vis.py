@@ -1,3 +1,4 @@
+import os
 import time
 import streamlit as st
 from streamlit.errors import StreamlitAPIException
@@ -151,6 +152,19 @@ def main():
         if not balloons:
             st.balloons()
             balloons = True
+
+
+    # def killing_button():
+    #     st.sidebar.write("---")
+    #     with st.sidebar.expander('Zakończ aplikację'):
+    #         cond = st.button("Zakończ")
+    #     if cond:
+    #         os.kill(int(os.environ['APP_PID']), signal.SIGTERM)
+    #         os.kill(os.getpid(), signal.SIGTERM)
+    #
+    # if 'APP_PID' in os.environ:
+    #     killing_button()
+
 
 if __name__ == "__main__":
     main()

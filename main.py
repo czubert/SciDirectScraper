@@ -261,7 +261,7 @@ class ScienceDirectParser:
 
 
 if __name__ == '__main__':
-    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=0,
+    science = ScienceDirectParser(keyword='sersitive', requested_num_of_publ=2,
                                   years=[x for x in range(2020, 2025)])
 
     science.scrap()
