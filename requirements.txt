@@ -5,3 +5,7 @@ streamlit==1.17.0
 tqdm==4.64.1
 webdriver_manager==3.8.5
 seleniumbase~=4.12.7
+openpyxl~=3.0.10
+lxml~=4.9.2
+altair~=4.2.0
+lxml~=4.9.2
