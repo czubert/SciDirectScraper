@@ -165,7 +165,7 @@ class ScienceDirectParser:
     def add_records_to_file(self, record):
         dir_name = 'output/authors'
 
-        utils.check_if_dir_exists(dir_name)
+        # utils.check_if_dir_exists(dir_name)
 
         if len(self.years) == 1:
             year = str(self.years[0])

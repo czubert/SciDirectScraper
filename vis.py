@@ -2,6 +2,7 @@ import os
 import time
 import streamlit as st
 from streamlit.errors import StreamlitAPIException
+import signal
 
 import vis_helper
 from main import ScienceDirectParser
@@ -27,20 +28,18 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.sidebar.title("Log:")
 
-#
-# def killing_button():
-#     st.sidebar.write("---")
-#     with st.sidebar.expander('Zakończ aplikację'):
-#         cond = st.button("Zakończ")
-#     if cond:
-#         os.kill(int(os.environ['APP_PID']), signal.SIGTERM)
-#         os.kill(os.getpid(), signal.SIGTERM)
-#
-#
-# if 'APP_PID' in os.environ:
-#     killing_button()
+def killing_button():
+    st.sidebar.write("---")
+    cond = st.sidebar.button("Stop program")
+    if cond:
+        os.kill(int(os.environ['APP_PID']), signal.SIGTERM)
+        os.kill(os.getpid(), signal.SIGTERM)
+
+
+if 'APP_PID' in os.environ:
+    killing_button()
+st.sidebar.title("Log:")
 
 # STYLE
 st.write('<style>div.row-widget.stRadio > '
@@ -137,7 +136,7 @@ if btn:
         # ====> Collecting authors data - parsing <====
         ###
 
-        st.sidebar.write('Collecting  authors data...')
+        st.sidebar.write('Collecting authors data...')
         # initializing progressbar for authors collection
         progress_bar = st.sidebar.progress(0)
         # Takes opened driver and opens each publication in a new tab
