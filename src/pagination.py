@@ -1,19 +1,18 @@
 import re
 import time
 
-import selenium.webdriver
-from selenium.webdriver.chrome import webdriver
-from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
 
 # Selenium
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import InvalidSessionIdException, StaleElementReferenceException, NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.common.by import By
 
-import constants
+import src.constants as constants
+import src.utils as utils
+
+
 # Modules
-import utils
 
 
 def number_of_pages_is_limited(driver, num_of_all_papers):

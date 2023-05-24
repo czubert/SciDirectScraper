@@ -9,8 +9,8 @@ def main():
     # Getting path to python executable (full path of deployed python on Windows)
     executable = sys.executable
 
-    path_to_main = os.path.join(os.path.dirname(__file__), "../vis.py")
-    # path_to_main = os.path.join(os.path.dirname(__file__), "vis.py")  # local ver
+    # path_to_main = os.path.join(os.path.dirname(__file__), "../vis.py")
+    path_to_main = os.path.join(os.path.dirname(__file__), "vis.py")  # local ver
 
     # Running streamlit server in a subprocess and writing to log file
     proc = Popen(

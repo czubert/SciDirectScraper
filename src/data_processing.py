@@ -1,6 +1,6 @@
 import pandas as pd
 
-import utils
+import src.utils as utils
 
 
 def data_processing(df: pd.DataFrame):

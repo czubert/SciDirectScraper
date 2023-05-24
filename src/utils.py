@@ -6,7 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 # Modules
-import constants
+import src.constants as constants
 
 
 def get_current_time():
@@ -16,7 +16,7 @@ def get_current_time():
 
 
 def write_data_to_file(df: pd.DataFrame, file_name: str):
-    df.to_excel(f'{file_name[:-4]}.xlsx')
+    # df.to_excel(f'{file_name[:-4]}.xlsx')
     df.to_csv(f'{file_name[:-4]}.csv', encoding='utf-16')
 
 

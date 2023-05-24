@@ -4,8 +4,8 @@ import streamlit as st
 from streamlit.errors import StreamlitAPIException
 import signal
 
-import vis_helper
-from main import ScienceDirectParser
+import src.vis_helper as vis_helper
+from src.main import ScienceDirectParser
 
 st.set_page_config(layout="wide",
                    page_title='ScienceDirectScrapper',

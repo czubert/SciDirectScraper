@@ -4,14 +4,15 @@ import time
 
 import pandas as pd
 from selenium.common import NoSuchWindowException
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
-import constants
-import utils
-from tools import pagination, driver, data_processing
-from tools.article import Article
+import src.constants as constants
+import src.utils as utils
+import src.driver as driver
+import src.pagination as pagination
+import src.data_processing as data_processing
+from src.article import Article
 
 
 class ScienceDirectParser:
@@ -153,7 +154,7 @@ class ScienceDirectParser:
         #     if pbar is not None:
         #         pbar.progress((i + 1) / self.requested_num_of_publ)
 
-        urls_path = f'output/tmp_urls'
+        urls_path = f'tmp_urls'
         urls_name = 'urls.csv'
 
         utils.write_urls_to_file(self.articles_urls, dir_name=urls_path, urls_name=urls_name)
@@ -163,9 +164,9 @@ class ScienceDirectParser:
         self.authors_collection = pd.concat((self.authors_collection, record))
 
     def add_records_to_file(self, record):
-        dir_name = 'output/authors'
+        dir_name = 'authors'
 
-        # utils.check_if_dir_exists(dir_name)
+        utils.check_if_dir_exists(dir_name)
 
         if len(self.years) == 1:
             year = str(self.years[0])
@@ -202,16 +203,17 @@ class ScienceDirectParser:
         """
         Writing final version to a file
         """
+        path = 'tmp_urls'
         self.authors_collection = self.authors_collection.sort_values(by=['year', 'num_of_publications'],
                                                                       ascending=False)
 
         self.csv_file = utils.write_data_to_file(self.authors_collection, self.file_name)
 
         try:
-            files = glob.glob('output/tmp_urls/*')
+            files = glob.glob(f'{path}/*')
             for f in files:
                 os.remove(f)
-            os.rmdir('output/tmp_urls/')
+            os.rmdir(f'{path}/')
 
         except Exception as e:
             print(f"No url's to be removed{e}")
@@ -229,7 +231,7 @@ class ScienceDirectParser:
             print(f'Exception in scrap() in parser_init: {e}')
 
         try:
-            urls_path = f'output/tmp_urls'
+            urls_path = f'tmp_urls'
             urls_name = 'urls.csv'
 
             if os.path.isfile(urls_path + '/' + urls_name):
