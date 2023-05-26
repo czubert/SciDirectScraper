@@ -8,8 +8,14 @@ from selenium.common.exceptions import NoSuchElementException, ElementNotInterac
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
+# run as executable
 import src.utils as utils
 from src.author import Author
+
+
+# # run from terminal
+# import utils
+# from author import Author
 
 
 class Article:

@@ -8,11 +8,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.common.by import By
 
+
+# run as executable
 import src.constants as constants
 import src.utils as utils
 
-
-# Modules
+# # run from terminal
+# import constants
+# import utils
 
 
 def number_of_pages_is_limited(driver, num_of_all_papers):

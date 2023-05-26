@@ -7,12 +7,21 @@ from selenium.common import NoSuchWindowException
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
+# # run as executable
 import src.constants as constants
 import src.utils as utils
 import src.driver as driver
 import src.pagination as pagination
 import src.data_processing as data_processing
 from src.article import Article
+
+# # run from terminal
+# import constants
+# import utils
+# import driver
+# import pagination
+# import data_processing
+# from article import Article
 
 
 class ScienceDirectParser:

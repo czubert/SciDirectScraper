@@ -1,6 +1,10 @@
 import pandas as pd
 
+# # run as executable
 import src.utils as utils
+
+# # run from terminal
+# import utils
 
 
 def data_processing(df: pd.DataFrame):

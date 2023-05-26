@@ -4,8 +4,13 @@ import streamlit as st
 from streamlit.errors import StreamlitAPIException
 import signal
 
+# # run as executable
 import src.vis_helper as vis_helper
 from src.main import ScienceDirectParser
+
+# # run from terminal
+# import vis_helper
+# from main import ScienceDirectParser
 
 st.set_page_config(layout="wide",
                    page_title='ScienceDirectScrapper',

@@ -5,8 +5,11 @@ import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-# Modules
+# run as executable
 import src.constants as constants
+
+# # run from terminal
+# import constants
 
 
 def get_current_time():
