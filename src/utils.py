@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 # run as executable
 import src.constants as constants
 
+
 # # run from terminal
 # import constants
 
@@ -19,7 +20,6 @@ def get_current_time():
 
 
 def write_data_to_file(df: pd.DataFrame, file_name: str):
-    # df.to_excel(f'{file_name[:-4]}.xlsx')
     df.to_csv(f'{file_name[:-4]}.csv', encoding='utf-16')
 
 
@@ -96,8 +96,10 @@ def group_by_email(df):
 
 
 def check_if_dir_exists(dir_name):
-    if not os.path.isdir(dir_name):
+    try:
         os.mkdir(dir_name)
+    except FileExistsError as e:
+        pass
 
 
 def write_urls_to_file(urls, dir_name, urls_name):

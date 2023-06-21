@@ -4,7 +4,7 @@ import streamlit as st
 from streamlit.errors import StreamlitAPIException
 import signal
 
-# # run as executable
+# run as executable
 import src.vis_helper as vis_helper
 from src.main import ScienceDirectParser
 
@@ -12,10 +12,17 @@ from src.main import ScienceDirectParser
 # import vis_helper
 # from main import ScienceDirectParser
 
-st.set_page_config(layout="wide",
-                   page_title='ScienceDirectScrapper',
-                   initial_sidebar_state='expanded'
-                   )
+st.set_page_config(
+    page_title="ScienceDirectScrapper",
+    page_icon="🧊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://www.sersitive.eu',
+        'Report a bug': "mailto:developers@sersitive.eu",
+        'About': "Made by Paweł Albrycht to separate small parts of database for Brevo!"
+    }
+)
 
 # Changing the width of the sidebar
 st.markdown(

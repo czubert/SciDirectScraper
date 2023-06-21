@@ -7,13 +7,14 @@ from selenium.common import NoSuchWindowException
 from selenium.webdriver.support.ui import WebDriverWait
 from tqdm import tqdm
 
-# # run as executable
+# run as executable
 import src.constants as constants
 import src.utils as utils
 import src.driver as driver
 import src.pagination as pagination
 import src.data_processing as data_processing
 from src.article import Article
+
 
 # # run from terminal
 # import constants
@@ -42,6 +43,7 @@ class ScienceDirectParser:
         self.requested_num_of_publ = requested_num_of_publ
         self.years = years
         # Saving
+        self.prefix = 'authors/'
         self.csv_file = None
         self.file_name = None
         self.authors_collection = None
@@ -173,9 +175,7 @@ class ScienceDirectParser:
         self.authors_collection = pd.concat((self.authors_collection, record))
 
     def add_records_to_file(self, record):
-        dir_name = 'authors'
-
-        utils.check_if_dir_exists(dir_name)
+        utils.check_if_dir_exists(self.prefix)
 
         if len(self.years) == 1:
             year = str(self.years[0])
@@ -183,7 +183,7 @@ class ScienceDirectParser:
             years = sorted(self.years)
             year = f'{years[0]}-{years[-1]}'
 
-        self.file_name = f'{dir_name}/{self.keyword}__{year}__{self.start_time}.csv'
+        self.file_name = f'{self.prefix}/{self.keyword}__{year}__{self.start_time}.csv'
 
         if not os.path.isfile(self.file_name):
             record.to_csv(self.file_name, mode='a', header=constants.COLUMNS)

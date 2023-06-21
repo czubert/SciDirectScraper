@@ -1,6 +1,6 @@
 import pandas as pd
 
-# # run as executable
+# run as executable
 import src.utils as utils
 
 # # run from terminal
